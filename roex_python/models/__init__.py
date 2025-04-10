@@ -3,7 +3,7 @@ Model definitions for the RoEx Tonn API
 """
 
 # Import common models and enums
-from roex_mcp.models.common import (
+from roex_python.models.common import (
     DesiredLoudness,
     InstrumentGroup,
     LoudnessPreference,
@@ -14,7 +14,7 @@ from roex_mcp.models.common import (
 )
 
 # Import mixing models
-from roex_mcp.models.mixing import (
+from roex_python.models.mixing import (
     FinalMixRequest,
     MultitrackMixRequest,
     MultitrackTaskResponse,
@@ -23,20 +23,20 @@ from roex_mcp.models.mixing import (
 )
 
 # Import mastering models
-from roex_mcp.models.mastering import (
+from roex_python.models.mastering import (
     AlbumMasteringRequest,
     MasteringRequest,
     MasteringTaskResponse
 )
 
 # Import analysis models
-from roex_mcp.models.analysis import (
+from roex_python.models.analysis import (
     AnalysisMusicalStyle,
     MixAnalysisRequest
 )
 
 # Import enhance models
-from roex_mcp.models.enhance import (
+from roex_python.models.enhance import (
     EnhanceMusicalStyle,
     MixEnhanceRequest,
     MixEnhanceResponse

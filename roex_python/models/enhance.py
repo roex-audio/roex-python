@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Optional
 
-from roex_mcp.models.common import LoudnessPreference
+from roex_python.models.common import LoudnessPreference
 
 
 class EnhanceMusicalStyle(Enum):

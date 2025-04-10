@@ -5,7 +5,7 @@ Models for the mixing-related API endpoints
 from dataclasses import dataclass, field
 from typing import List, Optional
 
-from roex_mcp.models.common import (
+from roex_python.models.common import (
     InstrumentGroup,
     MusicalStyle,
     PanPreference,

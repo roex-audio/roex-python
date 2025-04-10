@@ -17,14 +17,14 @@ A Python pip package for the [RoEx Tonn API](https://tonn.roexaudio.com) using t
 ## Installation
 
 ```bash
-pip install roex-mcp
+pip install roex-python
 ```
 
 ## Quick Start
 
 ```python
-from roex_mcp.client import RoExClient
-from roex_mcp.models import (
+from roex_python.client import RoExClient
+from roex_python.models import (
     MasteringRequest, MusicalStyle, DesiredLoudness
 )
 
@@ -61,8 +61,8 @@ For full documentation, including API reference and examples, visit:
 #### Multitrack Mixing
 
 ```python
-from roex_mcp.client import RoExClient
-from roex_mcp.models import (
+from roex_python.client import RoExClient
+from roex_python.models import (
     TrackData, MultitrackMixRequest, InstrumentGroup,
     PresenceSetting, PanPreference, ReverbPreference, MusicalStyle
 )

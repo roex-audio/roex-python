@@ -8,8 +8,8 @@ from typing import Dict, Any, List
 
 import requests
 
-from roex_mcp.models.enhance import MixEnhanceRequest, MixEnhanceResponse
-from roex_mcp.providers.api_provider import ApiProvider
+from roex_python.models.enhance import MixEnhanceRequest, MixEnhanceResponse
+from roex_python.providers.api_provider import ApiProvider
 
 
 class EnhanceController:

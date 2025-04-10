@@ -7,14 +7,14 @@ from typing import Dict, Any, List
 
 import requests
 
-from roex_mcp.models.mixing import (
+from roex_python.models.mixing import (
     MultitrackMixRequest,
     MultitrackTaskResponse,
     FinalMixRequest,
     TrackData,
     TrackGainData
 )
-from roex_mcp.providers.api_provider import ApiProvider
+from roex_python.providers.api_provider import ApiProvider
 
 
 class MixController:

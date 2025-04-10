@@ -5,11 +5,11 @@ build-backend = "setuptools.build_meta"
 [tool.poetry]
 name = "roex-mcp"
 version = "0.1.0"
-description = "MCP (Model-Controller-Provider) client for the RoEx Tonn API"
+description = "Pip package for the RoEx Tonn API"
 authors = ["RoEx <info@roexaudio.com>"]
 license = "MIT"
 readme = "README.md"
-repository = "https://github.com/roexaudio/roex-mcp"
+repository = "https://github.com/roexaudio/roex-python"
 homepage = "https://www.roexaudio.com"
 keywords = ["audio", "mixing", "mastering", "enhancement", "api"]
 
