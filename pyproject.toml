@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.poetry]
+name = "roex-mcp"
+version = "0.1.0"
+description = "MCP (Model-Controller-Provider) client for the RoEx Tonn API"
+authors = ["RoEx <info@roexaudio.com>"]
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/roexaudio/roex-mcp"
+homepage = "https://www.roexaudio.com"
+keywords = ["audio", "mixing", "mastering", "enhancement", "api"]
+
+[tool.poetry.dependencies]
+python = ">=3.7,<4.0"
+requests = "^2.25.0"
+
+[tool.poetry.dev-dependencies]
+pytest = "^6.2.5"
+black = "^21.6b0"
+isort = "^5.9.2"
+mypy = "^0.910"
