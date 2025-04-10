@@ -74,6 +74,12 @@ def enhance_workflow():
         else:
             print("Failed to download preview")
 
+        # Download preview stems if available
+        preview_stems = preview_results.get("stems", {})
+        for stem_name, stem_url in preview_stems.items():
+            stem_filename = os.path.join(output_dir, f"enhanced_preview_stem_{stem_name}.wav")
+            client.api_provider.download_file(stem_url, stem_filename)
+
     # Create full enhancement
     print("Creating full mix enhancement...")
     full_response = client.enhance.create_mix_enhance(enhance_request)
@@ -99,22 +105,11 @@ def enhance_workflow():
         else:
             print("Failed to download full enhancement")
 
-    # 3. Method 2: Complete workflow in one step
-    print("\nMethod 2: Complete workflow in one step")
-
-    # Process enhancement with all steps
-    enhance_results = client.enhance.process_mix_enhance_flow(
-        enhance_request,
-        output_dir="enhanced_tracks_method2"
-    )
-
-    # Print results
-    print("\nEnhancement Results:")
-    for key, url in enhance_results.items():
-        print(f"  {key}: {url}")
-
-    print("\nFiles downloaded to enhanced_tracks_method2/")
-
+        # Download final stems if available
+        final_stems = full_results.get("stems", {})
+        for stem_name, stem_url in final_stems.items():
+            stem_filename = os.path.join(output_dir, f"enhanced_full_stem_{stem_name}.wav")
+            client.api_provider.download_file(stem_url, stem_filename)
 
 if __name__ == "__main__":
     enhance_workflow()
