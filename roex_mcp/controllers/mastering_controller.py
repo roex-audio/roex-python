@@ -194,7 +194,7 @@ class MasteringController:
 
             # Get final master
             try:
-                final_url = self.retrieve_final_master(task_id)
+                final_url = self.retrieve_final_master(task_id)['download_url_mastered']
                 results[idx] = final_url
 
                 # Download the file
