@@ -81,11 +81,11 @@ class MixController:
             response = self.api_provider.post("/retrievepreviewmix", payload)
 
             # Check if the mix is already complete
-            if "previewMixTaskResults" in response:
+            if "previewMixTaskResults" in response and response.get("status") == "MIX_TASK_PREVIEW_COMPLETED":
                 return response["previewMixTaskResults"]
 
             # If status code is 200 but no results, it might still be processing
-            if "status" in response and response.get("status") == "MIX_TASK_PREVIEW_PENDING":
+            if "status" in response and response.get("status") != "MIX_TASK_PREVIEW_COMPLETED":
                 print(f"Mix preview is pending. Starting polling...")
             else:
                 # If the response doesn't indicate it's processing, return it as is

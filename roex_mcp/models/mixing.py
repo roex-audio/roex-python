@@ -37,7 +37,7 @@ class MultitrackMixRequest:
     track_data: List[TrackData]
     musical_style: MusicalStyle
     return_stems: bool = False
-    sample_rate: int = 44100
+    sample_rate: str = "44100"
     webhook_url: Optional[str] = None
 
 
@@ -53,4 +53,4 @@ class FinalMixRequest:
     multitrack_task_id: str
     track_data: List[TrackGainData]
     return_stems: bool = False
-    sample_rate: int = 44100
+    sample_rate: str = "44100"
