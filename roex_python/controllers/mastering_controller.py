@@ -8,12 +8,12 @@ from typing import Dict, Any, List
 
 import requests
 
-from roex_mcp.models.mastering import (
+from roex_python.models.mastering import (
     MasteringRequest,
     MasteringTaskResponse,
     AlbumMasteringRequest
 )
-from roex_mcp.providers.api_provider import ApiProvider
+from roex_python.providers.api_provider import ApiProvider
 
 
 class MasteringController:

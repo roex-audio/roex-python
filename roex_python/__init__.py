@@ -10,6 +10,6 @@ __author__ = "RoEx Audio"
 __email__ = "support@roexaudio.com"
 __license__ = "MIT"
 
-from roex_mcp.client import RoExClient
+from roex_python.client import RoExClient
 
 __all__ = ["RoExClient"]

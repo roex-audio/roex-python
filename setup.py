@@ -4,14 +4,14 @@ with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setup(
-    name="roex-mcp",
+    name="roex_python",
     version="0.1.0",
     author="RoEx Audio",
     author_email="support@roexaudio.com",
-    description="MCP (Model-Controller-Provider) client for the RoEx Tonn API",
+    description="Pip package for the RoEx Tonn API",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/roexaudio/roex-mcp",
+    url="https://github.com/roexaudio/roex-python",
     packages=find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",

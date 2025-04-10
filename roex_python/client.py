@@ -2,11 +2,11 @@
 Main RoEx client interface that unifies all controllers
 """
 
-from roex_mcp.controllers.analysis_controller import AnalysisController
-from roex_mcp.controllers.enhance_controller import EnhanceController
-from roex_mcp.controllers.mastering_controller import MasteringController
-from roex_mcp.controllers.mix_controller import MixController
-from roex_mcp.providers.api_provider import ApiProvider
+from roex_python.controllers.analysis_controller import AnalysisController
+from roex_python.controllers.enhance_controller import EnhanceController
+from roex_python.controllers.mastering_controller import MasteringController
+from roex_python.controllers.mix_controller import MixController
+from roex_python.providers.api_provider import ApiProvider
 
 
 class RoExClient:

@@ -9,8 +9,8 @@ import json
 # Add the parent directory to the Python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from roex_mcp.client import RoExClient
-from roex_mcp.models import MixAnalysisRequest, AnalysisMusicalStyle
+from roex_python.client import RoExClient
+from roex_python.models import MixAnalysisRequest, AnalysisMusicalStyle
 
 
 def print_analysis_results(results):
