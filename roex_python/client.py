@@ -6,6 +6,7 @@ from roex_python.controllers.analysis_controller import AnalysisController
 from roex_python.controllers.enhance_controller import EnhanceController
 from roex_python.controllers.mastering_controller import MasteringController
 from roex_python.controllers.mix_controller import MixController
+from roex_python.controllers.audio_cleanup_controller import AudioCleanupController
 from roex_python.providers.api_provider import ApiProvider
 
 
@@ -29,6 +30,7 @@ class RoExClient:
         self.mastering = MasteringController(self.api_provider)
         self.analysis = AnalysisController(self.api_provider)
         self.enhance = EnhanceController(self.api_provider)
+        self.audio_cleanup = AudioCleanupController(self.api_provider)
 
     def health_check(self) -> str:
         """

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.poetry]
 name = "roex-python"
-version = "0.1.0"
+version = "0.1.1"
 description = "Pip package for the RoEx Tonn API"
 authors = ["RoEx <info@roexaudio.com>"]
 license = "MIT"

@@ -3,6 +3,16 @@ Common models and enums shared across different API features
 """
 
 from enum import Enum
+from dataclasses import dataclass
+from typing import Optional
+
+
+@dataclass
+class BaseResponse:
+    """Base response model with common fields."""
+    error: bool = False
+    message: str = ""
+    info: str = ""
 
 
 class MusicalStyle(Enum):
