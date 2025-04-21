@@ -9,7 +9,10 @@ from .controllers.enhance_controller import EnhanceController
 from .controllers.audio_cleanup_controller import AudioCleanupController
 from .controllers.upload_controller import UploadController
 from .providers.api_provider import ApiProvider
+import logging
 
+# Initialize logger for this module
+logger = logging.getLogger(__name__)
 
 class RoExClient:
     """
@@ -25,6 +28,7 @@ class RoExClient:
             base_url: Base URL for the API
         """
         self.api_provider = ApiProvider(base_url=base_url, api_key=api_key)
+        logger.info(f"RoExClient initialized for base URL: {base_url}")
 
         # Initialize controllers
         self.mix = MixController(self.api_provider)

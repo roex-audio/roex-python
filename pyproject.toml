@@ -9,7 +9,7 @@ description = "Pip package for the RoEx Tonn API"
 authors = ["RoEx <info@roexaudio.com>"]
 license = "MIT"
 readme = "README.md"
-repository = "https://github.com/roexaudio/roex-python"
+repository = "https://github.com/roex-audio/roex-python"
 homepage = "https://www.roexaudio.com"
 keywords = ["audio", "mixing", "mastering", "enhancement", "api"]
 

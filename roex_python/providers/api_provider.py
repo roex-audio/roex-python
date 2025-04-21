@@ -3,11 +3,13 @@ Provider for making API calls to the RoEx Tonn API
 """
 
 import os
+import logging
 from typing import Any, Dict, Optional
 from urllib.parse import urljoin
-
 import requests
 
+# Initialize logger for this module
+logger = logging.getLogger(__name__)
 
 class ApiProvider:
     """Provider for making API calls to the RoEx Tonn API"""
@@ -26,6 +28,7 @@ class ApiProvider:
             "Content-Type": "application/json",
             "x-api-key": api_key
         }
+        logger.info(f"ApiProvider initialized for base URL: {self.base_url}")
 
     def post(self, endpoint: str, data: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -42,14 +45,27 @@ class ApiProvider:
             requests.HTTPError: If the request fails
         """
         url = urljoin(self.base_url, endpoint)
-        response = requests.post(url, json=data, headers=self.headers)
-        response.raise_for_status()
+        logger.info(f"Making POST request to: {url}")
+        logger.debug(f"Request data (keys): {list(data.keys())}") # Log only keys for potentially sensitive data
 
-        # Try to parse as JSON, but handle non-JSON responses gracefully
         try:
-            return response.json()
-        except ValueError:
-            return {"response": response.text}
+            response = requests.post(url, json=data, headers=self.headers)
+            logger.info(f"Received response with status code: {response.status_code} from {url}")
+            # Log non-OK status codes as warnings or errors
+            if not response.ok:
+                logger.warning(f"Non-OK ({response.status_code}) response from {url}. Response text: {response.text[:500]}...") # Log beginning of error text
+            response.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
+            # Try to parse as JSON, but handle non-JSON responses gracefully
+            try:
+                return response.json()
+            except ValueError:
+                return {"response": response.text}
+        except requests.exceptions.RequestException as e:
+            logger.exception(f"HTTP request failed: POST {url}. Error: {e}")
+            raise
+        except Exception as e:
+            logger.exception(f"An unexpected error occurred during request: POST {url}. Error: {e}")
+            raise
 
     def get(self, endpoint: str) -> Any:
         """
@@ -65,14 +81,26 @@ class ApiProvider:
             requests.HTTPError: If the request fails
         """
         url = urljoin(self.base_url, endpoint)
-        response = requests.get(url, headers=self.headers)
-        response.raise_for_status()
+        logger.info(f"Making GET request to: {url}")
 
-        # Try to parse as JSON, but handle non-JSON responses gracefully
         try:
-            return response.json()
-        except ValueError:
-            return response.text
+            response = requests.get(url, headers=self.headers)
+            logger.info(f"Received response with status code: {response.status_code} from {url}")
+            # Log non-OK status codes as warnings or errors
+            if not response.ok:
+                logger.warning(f"Non-OK ({response.status_code}) response from {url}. Response text: {response.text[:500]}...") # Log beginning of error text
+            response.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
+            # Try to parse as JSON, but handle non-JSON responses gracefully
+            try:
+                return response.json()
+            except ValueError:
+                return response.text
+        except requests.exceptions.RequestException as e:
+            logger.exception(f"HTTP request failed: GET {url}. Error: {e}")
+            raise
+        except Exception as e:
+            logger.exception(f"An unexpected error occurred during request: GET {url}. Error: {e}")
+            raise
 
     def download_file(self, url: str, local_filename: str, chunk_size: int = 8192) -> bool:
         """
@@ -86,6 +114,7 @@ class ApiProvider:
         Returns:
             True if download was successful, False otherwise
         """
+        logger.info(f"Attempting to download file from {url} to {local_filename}")
         # Ensure the directory exists
         os.makedirs(os.path.dirname(os.path.abspath(local_filename)), exist_ok=True)
 
@@ -95,7 +124,14 @@ class ApiProvider:
                 with open(local_filename, 'wb') as f:
                     for chunk in r.iter_content(chunk_size=chunk_size):
                         f.write(chunk)
+            logger.info(f"Successfully downloaded file to {local_filename}")
             return True
+        except requests.exceptions.RequestException as e:
+            logger.exception(f"Failed to download file from {url}. Error: {e}")
+            return False
+        except IOError as e:
+            logger.exception(f"Failed to write downloaded file to {local_filename}. Error: {e}")
+            return False
         except Exception as e:
-            print(f"Error downloading file from {url}: {e}")
+            logger.exception(f"An unexpected error occurred during file download from {url}. Error: {e}")
             return False

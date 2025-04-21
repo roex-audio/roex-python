@@ -1,107 +1,119 @@
-"""Example demonstrating how to use the upload functionality"""
+"""Example demonstrating how to upload an audio file to RoEx secure storage.
 
+This example uses the high-level `upload_file` utility from the `roex_python`
+package, which simplifies the process by handling both getting the signed URL
+and performing the upload.
+
+Workflow:
+1. Initialize client securely using environment variables.
+2. Validate the input audio file.
+3. Call `upload_file` with the client and file path.
+4. Print the secure, readable URL provided by RoEx, which can be used in
+   subsequent API calls (e.g., for analysis, mastering, cleanup).
+
+Before running:
+1. Set your API key in the environment:
+   export ROEX_API_KEY='your_api_key_here'
+
+2. Have a WAV, FLAC, or MP3 file ready to upload.
+   - Supported sample rates: 44.1kHz, 48kHz
+   - Supported bit depths: 16-bit, 24-bit (for WAV/FLAC)
+   - Maximum duration: 10 minutes per track
+
+File Security:
+- The `upload_file` utility uses secure, signed URLs obtained from the RoEx API.
+- The upload itself is performed directly to RoEx's secure storage.
+- The returned `readable_url` is a secure reference to the file within RoEx's
+  system, valid for a limited time and usable only in further RoEx API calls.
+
+Example Usage:
+    export ROEX_API_KEY='your_api_key_here'
+    python upload_example.py /path/to/your/audio.mp3
+"""
+
+import sys
 import os
-import requests
 from roex_python import RoExClient
-from roex_python.models import UploadUrlRequest
+from roex_python.utils import upload_file # Import the utility function
+from common import setup_logger
 
-def get_upload_url(filename: str, content_type: str, api_key: str) -> dict:
-    """
-    Get signed URLs for uploading and accessing an audio file.
-    
-    Args:
-        filename: Name of the file to upload
-        content_type: MIME type of the file (audio/mpeg, audio/wav, or audio/flac)
-        api_key: Your RoEx API key
-    
-    Returns:
-        Dictionary containing signed_url and readable_url
-    """
-    client = RoExClient(api_key=api_key)
-    
-    request = UploadUrlRequest(
-        filename=filename,
-        content_type=content_type
-    )
-    
-    response = client.upload.get_upload_url(request)
-    
-    if response.error:
-        raise Exception(f"Failed to get upload URL: {response.message}")
-    
-    return {
-        'signed_url': response.signed_url,
-        'readable_url': response.readable_url
-    }
+# Set up logger for this module
+logger = setup_logger(__name__)
 
-def upload_file(signed_url: str, filename: str, content_type: str) -> bool:
-    """
-    Upload a file using the signed URL.
-    
-    Args:
-        signed_url: The URL to upload the file to
-        filename: Path to the file to upload
-        content_type: MIME type of the file
-    
-    Returns:
-        True if upload was successful
-    """
-    with open(filename, 'rb') as f:
-        response = requests.put(
-            signed_url,
-            data=f,
-            headers={'Content-Type': content_type}
-        )
-    return response.status_code == 200
+def get_api_key():
+    """Retrieve the API key from the environment variable."""
+    api_key = os.environ.get('ROEX_API_KEY')
+    if not api_key:
+        raise ValueError("ROEX_API_KEY environment variable not set.")
+    return api_key
 
-def get_content_type(file_path: str) -> str:
-    """
-    Determine content type based on file extension.
-    
-    Args:
-        file_path: Path to the file
-    
-    Returns:
-        MIME type of the file
-    """
+def validate_audio_file(file_path: str):
+    """Validate the input audio file."""
+    if not os.path.isfile(file_path):
+        raise FileNotFoundError(f"File not found: {file_path}")
+
     filename = os.path.basename(file_path)
     extension = os.path.splitext(filename)[1].lower()
     
-    content_type_map = {
-        '.mp3': 'audio/mpeg',
-        '.wav': 'audio/wav',
-        '.flac': 'audio/flac'
-    }
+    supported_extensions = ['.mp3', '.wav', '.flac']
+    if extension not in supported_extensions:
+        raise ValueError(f"Unsupported file type: {extension}. Must be one of: {', '.join(supported_extensions)}")
     
-    if extension not in content_type_map:
-        raise ValueError(f"Unsupported file type: {extension}. Must be one of: {', '.join(content_type_map.keys())}")
-    
-    return content_type_map[extension]
+    return os.path.abspath(file_path)
+
+def upload_workflow(file_path: str):
+    """Handles validating the file, initializing the client, and uploading."""
+    logger.info(f"\n=== Uploading File: {file_path} ===")
+
+    # 1. Validate input file
+    try:
+        validated_path = validate_audio_file(file_path)
+        logger.info(f"Validated file: {validated_path}")
+    except (FileNotFoundError, ValueError) as e:
+        logger.error(f"Error: {e}")
+        return
+
+    # 2. Initialize client
+    try:
+        client = RoExClient(
+            api_key=get_api_key(),
+            base_url="https://tonn.roexaudio.com" # Or your specific endpoint
+        )
+        logger.info("RoEx client initialized.")
+    except ValueError as e:
+        logger.error(f"Error initializing client: {e}")
+        return
+
+    # 3. Upload file using the utility function
+    try:
+        logger.info(f"Uploading {validated_path} to RoEx storage...")
+        # The upload_file utility handles getting the signed URL and PUT request
+        readable_url = upload_file(client, validated_path)
+
+        if readable_url:
+            logger.info("\nFile uploaded successfully!")
+            logger.info(f"Readable URL (for use in other API calls): {readable_url}")
+            logger.info("\n=== Upload Workflow Completed Successfully ===")
+        else:
+            # upload_file usually raises exceptions on failure, but check just in case
+            logger.error("\nUpload failed. No readable URL returned.")
+            logger.error("\n=== Upload Workflow Failed ===")
+
+    except Exception as e:
+        logger.exception(f"\nAn error occurred during upload: {e}")
+        logger.error("\n=== Upload Workflow Failed ===")
 
 if __name__ == "__main__":
-    # Replace with your API key
-    API_KEY = "AIzaSyCd-uoRDeMbXek_vKn9w09FejwsTIRmlyQ"
-    
-    # Example usage
+    if len(sys.argv) != 2:
+        logger.error("Usage: python upload_example.py <path_to_audio_file>")
+        sys.exit(1)
+
+    input_file_path = sys.argv[1]
+
     try:
-        file_path = "/Users/davidronan/Desktop/demucs_A.mp3"
-        content_type = get_content_type(file_path)
-        
-        # Get upload URLs
-        result = get_upload_url(os.path.basename(file_path), content_type, API_KEY)
-        
-        # Upload the file
-        success = upload_file(
-            result['signed_url'],
-            file_path,
-            content_type
-        )
-        
-        if success:
-            print("File uploaded successfully!")
-            print(f"Use this URL in other API calls: {result['readable_url']}")
-        else:
-            print("Upload failed")
-            
+        upload_workflow(input_file_path)
+    except KeyboardInterrupt:
+        logger.info("\nUpload cancelled by user.")
     except Exception as e:
-        print(f"Error: {str(e)}")
+        # Catch any unexpected errors
+        logger.exception(f"\nAn unexpected error occurred: {e}")

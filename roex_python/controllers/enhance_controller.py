@@ -5,12 +5,15 @@ Controller for mix enhancement operations
 import os
 import time
 from typing import Dict, Any, List
+import logging
 
 import requests
 
 from roex_python.models.enhance import MixEnhanceRequest, MixEnhanceResponse
 from roex_python.providers.api_provider import ApiProvider
 
+# Initialize logger for this module
+logger = logging.getLogger(__name__)
 
 class EnhanceController:
     """Controller for mix enhancement operations"""
@@ -23,6 +26,7 @@ class EnhanceController:
             api_provider: Provider for API interactions
         """
         self.api_provider = api_provider
+        logger.info("EnhanceController initialized.")
 
     def create_mix_enhance_preview(self, request: MixEnhanceRequest) -> MixEnhanceResponse:
         """
@@ -37,16 +41,20 @@ class EnhanceController:
         Raises:
             Exception: If the API request fails
         """
+        logger.info("Creating mix enhance preview")
+        logger.debug(f"Mix enhance request data: {request}")
         payload = self._prepare_mix_enhance_payload(request)
 
         try:
             response = self.api_provider.post("/mixenhancepreview", payload)
+            logger.info(f"Mix enhance preview created successfully. Task ID: {response.get('mixrevive_task_id', '')}")
             return MixEnhanceResponse(
                 mixrevive_task_id=response.get("mixrevive_task_id", ""),
                 error=response.get("error", False),
                 message=response.get("message", "")
             )
         except requests.HTTPError as e:
+            logger.error(f"Failed to create mix enhance preview: {str(e)}")
             raise Exception(f"Failed to create mix enhance preview: {str(e)}")
 
     def create_mix_enhance(self, request: MixEnhanceRequest) -> MixEnhanceResponse:
@@ -62,16 +70,20 @@ class EnhanceController:
         Raises:
             Exception: If the API request fails
         """
+        logger.info("Creating mix enhance")
+        logger.debug(f"Mix enhance request data: {request}")
         payload = self._prepare_mix_enhance_payload(request)
 
         try:
             response = self.api_provider.post("/mixenhance", payload)
+            logger.info(f"Mix enhance created successfully. Task ID: {response.get('mixrevive_task_id', '')}")
             return MixEnhanceResponse(
                 mixrevive_task_id=response.get("mixrevive_task_id", ""),
                 error=response.get("error", False),
                 message=response.get("message", "")
             )
         except requests.HTTPError as e:
+            logger.error(f"Failed to create mix enhance: {str(e)}")
             raise Exception(f"Failed to create mix enhance: {str(e)}")
 
     def retrieve_enhanced_track(self, task_id: str, max_attempts: int = 50,
@@ -90,6 +102,7 @@ class EnhanceController:
         Raises:
             Exception: If polling times out or the API request fails
         """
+        logger.info(f"Retrieving enhanced track for task ID: {task_id}")
         payload = {
             "mixReviveData": {
                 "mixReviveTaskId": task_id
@@ -99,12 +112,13 @@ class EnhanceController:
         # Poll for results
         for attempt in range(max_attempts):
             try:
-                print(f"Polling attempt {attempt + 1}/{max_attempts}...")
+                logger.debug(f"Polling attempt {attempt + 1}/{max_attempts}...")
                 response = self.api_provider.post("/retrieveenhancedtrack", payload)
 
                 if not response.get("error", False):
                     results = response.get("revived_track_tasks_results", {})
                     if results:
+                        logger.info(f"Enhanced track retrieved successfully for task ID: {task_id}")
                         return results
 
                     # Some API versions might return a different format
@@ -113,13 +127,15 @@ class EnhanceController:
                                 "download_url_revived" in response[key] or
                                 "download_url_preview_revived" in response[key]
                         ):
+                            logger.info(f"Enhanced track retrieved successfully for task ID: {task_id}")
                             return response[key]
             except requests.HTTPError as e:
-                print(f"Error during polling: {str(e)}")
+                logger.error(f"Error during polling: {str(e)}")
 
             # Wait before next attempt
             time.sleep(poll_interval)
 
+        logger.error(f"Enhanced track was not available after polling for task ID: {task_id}.")
         raise Exception("Enhanced track was not available after polling. Please try again later.")
 
     def _prepare_mix_enhance_payload(self, request: MixEnhanceRequest) -> Dict[str, Any]:
@@ -132,6 +148,7 @@ class EnhanceController:
         Returns:
             API payload dictionary
         """
+        logger.debug(f"Preparing mix enhance payload for request: {request}")
         return {
             "mixReviveData": {
                 "audioFileLocation": request.audio_file_location,

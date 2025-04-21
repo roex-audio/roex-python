@@ -3,16 +3,16 @@
 [![PyPI version](https://badge.fury.io/py/roex-mcp.svg)](https://badge.fury.io/py/roex-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A Python pip package for the [RoEx Tonn API](https://tonn.roexaudio.com) using the MCP (Model-Controller-Provider) architecture pattern. This package provides a clean, type-safe interface to interact with the RoEx Tonn API for audio mixing, mastering, analysis, and enhancement.
+A Python pip package for the [RoEx Tonn API](https://tonn-portal.roexaudio.com) using the MCP (Model-Controller-Provider) architecture pattern. This package provides a clean, type-safe interface to interact with the RoEx Tonn API for audio mixing, mastering, analysis, and enhancement.
 
 ## Features
 
-- 🎚️ **Multitrack Mixing**: Submit tracks for professional AI mixing
-- 🎛️ **Audio Mastering**: Master individual tracks or entire albums
-- 📊 **Mix Analysis**: Analyze and compare audio mixes
-- 🔧 **Mix Enhancement**: Enhance and improve existing mixes
-- 🔄 **Asynchronous Processing**: Built-in polling for long-running tasks
-- 📥 **File Downloads**: Easily download processed audio files
+- **Multitrack Mixing**: Submit tracks for professional AI mixing
+- **Audio Mastering**: Master individual tracks or entire albums
+- **Mix Analysis**: Analyze and compare audio mixes
+- **Mix Enhancement**: Enhance and improve existing mixes
+- **Asynchronous Processing**: Built-in polling for long-running tasks
+- **File Downloads**: Easily download processed audio files
 
 ## Installation
 
@@ -53,8 +53,9 @@ print(f"Final Master URL: {final_url}")
 
 ## Documentation
 
-For full documentation, including API reference and examples, visit:
-[https://docs.tonn.roexaudio.com/api](https://docs.tonn.roexaudio.com/api)
+-   **API Documentation**: For details on the underlying RoEx Tonn API endpoints and parameters, refer to the [Official API Documentation]([https://roex.stoplight.io/]).
+-   **Usage Examples**: Practical examples demonstrating various workflows can be found in the [`examples/`](./examples/README.md) directory.
+-   **Package Reference**: Detailed information about the Python classes, methods, and models provided by this package can be found in the docstrings within the source code.
 
 ### Example Workflows
 
@@ -104,7 +105,7 @@ preview = client.mix.retrieve_preview_mix(mix_task.multitrack_task_id)
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-1. Fork the repository
+1. Fork the repository: [https://github.com/roex-audio/roex-python](https://github.com/roex-audio/roex-python)
 2. Create your feature branch (`git checkout -b feature/amazing-feature`)
 3. Commit your changes (`git commit -m 'Add some amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)

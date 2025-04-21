@@ -1,14 +1,61 @@
 """
-Example demonstrating how to use the RoEx MCP client for mix analysis
+Example demonstrating how to use the RoEx client for mix analysis.
+
+This example shows how to:
+- Analyze a single audio mix for technical and aesthetic qualities.
+- Compare two audio mixes to highlight differences.
+
+Features analyzed include:
+- Loudness (LUFS, Peak)
+- Clipping
+- Sample Rate, Bit Depth
+- Stereo Field, Phase Issues, Mono Compatibility
+- Tonal Profile (frequency balance)
+
+Workflow:
+1. Initialize client securely using environment variables.
+2. Upload audio file(s) to RoEx's secure storage.
+3. Perform analysis on a single mix.
+4. Optionally, perform a comparison between two mixes.
+5. Print and save the results.
+
+Before running:
+1. Set your API key in the environment:
+   export ROEX_API_KEY='your_api_key_here'
+
+2. Have WAV or FLAC file(s) ready for analysis.
+   - Supported sample rates: 44.1kHz, 48kHz
+   - Supported bit depths: 16-bit, 24-bit
+   - Maximum duration: 10 minutes
+
+File Security:
+- Files are uploaded using secure, signed URLs.
+- All processing happens in RoEx's secure environment.
+- Files are automatically removed after processing.
+- Download URLs (if any) are temporary and expire.
+
+Example Usage:
+    # Analyze a single file
+    export ROEX_API_KEY='your_api_key_here'
+    python analysis_example.py /path/to/your/audio.wav
+
+    # Compare two files
+    export ROEX_API_KEY='your_api_key_here'
+    python analysis_example.py /path/to/mix_a.wav /path/to/mix_b.wav
 """
 
-import os
+import sys
 import json
-from roex_python.utils import upload_file
+from pathlib import Path
 
 from roex_python.client import RoExClient
 from roex_python.models import MixAnalysisRequest, AnalysisMusicalStyle
+from roex_python.utils import upload_file
 
+from common import get_api_key, validate_audio_file, ensure_output_dir, setup_logger
+
+# Set up logger for this module
+logger = setup_logger(__name__)
 
 def print_analysis_results(results):
     """Pretty print the analysis results from the mix analysis endpoint.
@@ -16,21 +63,21 @@ def print_analysis_results(results):
     Args:
         results: Dictionary containing the analysis results from the API
     """
-    if "payload" not in results:
-        print("No payload data found in results.")
+    if not results or "payload" not in results:
+        logger.error("No payload data found in analysis results.")
         return
 
     payload = results["payload"]
 
     print("\n==== Mix Analysis Results ====")
-    print(f"Loudness: {payload.get('integrated_loudness_lufs', 'N/A')} LUFS")
-    print(f"Peak: {payload.get('peak_loudness_dbfs', 'N/A')} dBFS")
-    print(f"Clipping: {payload.get('clipping', 'N/A')}")
-    print(f"Sample Rate: {payload.get('sample_rate', 'N/A')} Hz")
-    print(f"Bit Depth: {payload.get('bit_depth', 'N/A')} bits")
-    print(f"Stereo Field: {payload.get('stereo_field', 'N/A')}")
-    print(f"Phase Issues: {payload.get('phase_issues', 'N/A')}")
-    print(f"Mono Compatible: {payload.get('mono_compatible', 'N/A')}")
+    print(f"Integrated Loudness: {payload.get('integrated_loudness_lufs', 'N/A')} LUFS")
+    print(f"Peak Loudness:       {payload.get('peak_loudness_dbfs', 'N/A')} dBFS")
+    print(f"Clipping:            {payload.get('clipping', 'N/A')}")
+    print(f"Sample Rate:         {payload.get('sample_rate', 'N/A')} Hz")
+    print(f"Bit Depth:           {payload.get('bit_depth', 'N/A')} bits")
+    print(f"Stereo Field:        {payload.get('stereo_field', 'N/A')}")
+    print(f"Phase Issues:        {payload.get('phase_issues', 'N/A')}")
+    print(f"Mono Compatible:     {payload.get('mono_compatible', 'N/A')}")
 
     # Print tonal profile
     tonal_profile = payload.get("tonal_profile", {})
@@ -47,116 +94,182 @@ def print_analysis_results(results):
             print(f"  {key}: {value}")
 
 
-def analysis_workflow():
-    """Example workflow demonstrating how to:
-    1. Upload audio files (WAV/FLAC)
-    2. Analyze a single mix
-    3. Compare two mixes
-    4. Save results to files
-    """
+def print_comparison_results(results):
+    """Pretty print the comparison results.
 
-    # Initialize the client with your API key
+    Args:
+        results: Dictionary containing the comparison results.
+    """
+    print("\n==== Mix Comparison Results ====\n")
+    if not results or "differences" not in results:
+        logger.error("No comparison difference data found.")
+        return
+
+    differences = results["differences"]
+    print("Key Differences:\n")
+
+    # Helper to print value differences
+    def print_value_diff(key, unit=""):
+        if key in differences and isinstance(differences[key], dict):
+            diff_data = differences[key]
+            diff_val = diff_data.get('difference', 'N/A')
+            mix_a_val = diff_data.get('mix_a_value', 'N/A')
+            mix_b_val = diff_data.get('mix_b_value', 'N/A')
+            print(f"  {key.replace('_', ' ').title():<20}: {diff_val}{unit}")
+            print(f"    {'Mix A:':<10} {mix_a_val}{unit}")
+            print(f"    {'Mix B:':<10} {mix_b_val}{unit}")
+
+    # Helper to print status differences
+    def print_status_diff(key):
+        if key in differences and isinstance(differences[key], dict):
+            diff_data = differences[key]
+            status = diff_data.get('status', 'N/A')
+            print(f"  {key.replace('_', ' ').title():<20}: {status}")
+            if status == "DIFFERENT":
+                mix_a_val = diff_data.get('mix_a_value', 'N/A')
+                mix_b_val = diff_data.get('mix_b_value', 'N/A')
+                print(f"    {'Mix A:':<10} {mix_a_val}")
+                print(f"    {'Mix B:':<10} {mix_b_val}")
+
+    print_value_diff("integrated_loudness_lufs", unit=" LUFS")
+    print_value_diff("peak_loudness_dbfs", unit=" dBFS")
+    print_value_diff("bit_depth", unit=" bits")
+    print_value_diff("sample_rate", unit=" Hz")
+    print("") # Add spacing
+    print_status_diff("clipping")
+    print_status_diff("stereo_field")
+    print_status_diff("phase_issues")
+    print_status_diff("mono_compatible")
+
+    # Print tonal profile differences
+    tonal_diff = differences.get("tonal_profile", {})
+    if tonal_diff:
+        print("\n  Tonal Profile Differences:")
+        for freq, diff_data in tonal_diff.items():
+            if isinstance(diff_data, dict):
+                status = diff_data.get('status', 'N/A')
+                print(f"    {freq:<10}: {status}")
+                if status == "DIFFERENT":
+                    mix_a_val = diff_data.get('mix_a_value', 'N/A')
+                    mix_b_val = diff_data.get('mix_b_value', 'N/A')
+                    print(f"      {'Mix A:':<10} {mix_a_val}")
+                    print(f"      {'Mix B:':<10} {mix_b_val}")
+
+
+def analysis_workflow(input_file: str, compare_file: str = None):
+    """Run the analysis workflow for one or two files.
+    
+    Args:
+        input_file: Path to the primary audio file for analysis.
+        compare_file: Optional path to a second audio file for comparison.
+    
+    Raises:
+        ValueError: If API key is not set or input files are invalid.
+        FileNotFoundError: If input files don't exist.
+    """
     client = RoExClient(
-        api_key="YOUR_API-KEY-HERE",  # Replace with your actual API key
+        api_key=get_api_key(),
         base_url="https://tonn.roexaudio.com"
     )
+    output_dir = ensure_output_dir("analysis_results")
 
-    # First, upload your audio file (must be WAV or FLAC format)
-    file_path = "/path/to/your/audio_1.wav"  # Replace with your WAV or FLAC file
-    print("\n=== Uploading Audio File ===")
-    audio_url = upload_file(client, file_path)
-    print(f"File uploaded successfully: {audio_url}")
+    # --- Validate and Upload Mix A ---
+    file_path_a = validate_audio_file(input_file)
+    logger.info(f"\n=== Uploading {file_path_a.name} (Mix A) ===")
+    try:
+        audio_url_a = upload_file(client, str(file_path_a))
+        logger.info(f"Uploaded Mix A to secure storage.")
+    except Exception as e:
+        logger.error(f"Error uploading {file_path_a.name}: {e}")
+        return
 
-    print("\n=== Starting Mix Analysis ===")
-
+    # --- Perform Single Mix Analysis (Mix A) ---
+    logger.info("\n=== Analyzing Mix A ===")
     analysis_request = MixAnalysisRequest(
-        audio_file_location=audio_url,
-        musical_style=AnalysisMusicalStyle.ROCK,
-        is_master=True
+        audio_file_location=audio_url_a,
+        musical_style=AnalysisMusicalStyle.ROCK, # Choose appropriate style
+        is_master=True # Set based on whether it's a final master
     )
+    try:
+        analysis_results = client.analysis.analyze_mix(analysis_request)
+        if not analysis_results or analysis_results.get("error"): # Basic error check
+             logger.error(f"Error analyzing mix: {analysis_results.get('message', 'Unknown API error')}")
+             # Continue to comparison if possible, but don't save analysis results
+        else:
+            print_analysis_results(analysis_results)
+            analysis_output_path = output_dir / f"analysis_{file_path_a.stem}.json"
+            try:
+                with open(analysis_output_path, "w") as f:
+                    json.dump(analysis_results, f, indent=2)
+                logger.info(f"\nAnalysis results saved to {analysis_output_path}")
+            except IOError as e:
+                logger.error(f"Error saving analysis results: {e}")
 
-    # Send the analysis request
-    print("\n=== Analyzing Mix ===")
-    analysis_results = client.analysis.analyze_mix(analysis_request)
+    except Exception as e:
+        logger.exception(f"Error calling analysis API: {e}")
+        # Decide if we should stop or try comparison
+        if not compare_file: return # Stop if only doing single analysis
 
-    # Print analysis results
-    print_analysis_results(analysis_results)
 
-    # Save analysis results to file
-    output_dir = "analysis_results"
-    os.makedirs(output_dir, exist_ok=True)
+    # --- Perform Comparison if compare_file is provided ---
+    if compare_file:
+        # --- Validate and Upload Mix B ---
+        file_path_b = validate_audio_file(compare_file)
+        logger.info(f"\n=== Uploading {file_path_b.name} (Mix B) ===")
+        try:
+            audio_url_b = upload_file(client, str(file_path_b))
+            logger.info(f"Uploaded Mix B to secure storage.")
+        except Exception as e:
+            logger.error(f"Error uploading {file_path_b.name}: {e}")
+            logger.error("Cannot perform comparison without Mix B.")
+            return # Can't compare if upload fails
 
-    with open(os.path.join(output_dir, "analysis.json"), "w") as f:
-        json.dump(analysis_results, f, indent=2)
+        # --- Compare Mix A vs Mix B ---
+        logger.info("\n=== Comparing Mix A vs Mix B ===")
+        try:
+            comparison_results = client.analysis.compare_mixes(
+                mix_a_url=audio_url_a,
+                mix_b_url=audio_url_b,
+                musical_style=AnalysisMusicalStyle.ROCK, # Use consistent style
+                is_master=True # Assume both are masters if comparing
+            )
+            if not comparison_results or comparison_results.get("error"): # Basic error check
+                logger.error(f"Error comparing mixes: {comparison_results.get('message', 'Unknown API error')}")
+                return
+            else:
+                print_comparison_results(comparison_results)
+                comparison_output_path = output_dir / f"comparison_{file_path_a.stem}_vs_{file_path_b.stem}.json"
+                try:
+                    with open(comparison_output_path, "w") as f:
+                        json.dump(comparison_results, f, indent=2)
+                    logger.info(f"\nComparison results saved to {comparison_output_path}")
+                except IOError as e:
+                     logger.error(f"Error saving comparison results: {e}")
 
-    print(f"\nAnalysis results saved to {output_dir}/analysis.json")
+        except Exception as e:
+            logger.exception(f"Error calling comparison API: {e}")
+            return
 
-    # Optional: Compare two mixes
-    print("\n=== Comparing Two Mixes ===")
-
-    # Upload second mix for comparison
-    mix_b_path = "/path/to/your/audio_2.wav"  # Replace with your WAV or FLAC file
-    print("\nUploading second mix...")
-    mix_b_url = upload_file(client, mix_b_path)
-    print(f"Second mix uploaded successfully: {mix_b_url}")
-
-    comparison_results = client.analysis.compare_mixes(
-        mix_a_url=audio_url,  # Use our first mix as mix A
-        mix_b_url=mix_b_url,
-        musical_style=AnalysisMusicalStyle.ROCK,
-        is_master=True
-    )
-
-    # Print comparison results
-    print("\n==== Mix Comparison Results ====")
-
-    # Print key differences
-    differences = comparison_results.get("differences", {})
-    if differences:
-        print("\nKey Differences:")
-
-        # Print loudness differences
-        if "integrated_loudness_lufs" in differences:
-            loudness_diff = differences["integrated_loudness_lufs"]
-            print(f"Loudness Difference: {loudness_diff.get('difference', 'N/A')} LUFS")
-            print(f"  Mix A: {loudness_diff.get('mix_a_value', 'N/A')} LUFS")
-            print(f"  Mix B: {loudness_diff.get('mix_b_value', 'N/A')} LUFS")
-
-        # Print other numeric differences
-        for key in ["peak_loudness_dbfs", "bit_depth", "sample_rate"]:
-            if key in differences and isinstance(differences[key], dict):
-                diff = differences[key]
-                print(f"{key.replace('_', ' ').title()} Difference: {diff.get('difference', 'N/A')}")
-                print(f"  Mix A: {diff.get('mix_a_value', 'N/A')}")
-                print(f"  Mix B: {diff.get('mix_b_value', 'N/A')}")
-
-        # Print categorical differences
-        for key in ["clipping", "stereo_field"]:
-            if key in differences and isinstance(differences[key], dict):
-                diff = differences[key]
-                print(f"{key.replace('_', ' ').title()}: {diff.get('status', 'N/A')}")
-                if diff.get('status') == "DIFFERENT":
-                    print(f"  Mix A: {diff.get('mix_a_value', 'N/A')}")
-                    print(f"  Mix B: {diff.get('mix_b_value', 'N/A')}")
-
-        # Print tonal profile differences
-        tonal_diff = differences.get("tonal_profile", {})
-        if tonal_diff:
-            print("\nTonal Profile Differences:")
-            for freq, diff in tonal_diff.items():
-                if isinstance(diff, dict):
-                    status = diff.get('status', 'N/A')
-                    print(f"  {freq}: {status}")
-                    if status == "DIFFERENT":
-                        print(f"    Mix A: {diff.get('mix_a_value', 'N/A')}")
-                        print(f"    Mix B: {diff.get('mix_b_value', 'N/A')}")
-
-    # Save comparison results to file
-    with open(os.path.join(output_dir, "comparison.json"), "w") as f:
-        json.dump(comparison_results, f, indent=2)
-
-    print(f"\nComparison results saved to {output_dir}/comparison.json")
-
+    logger.info("\n=== Analysis Complete ===\n")
 
 if __name__ == "__main__":
-    analysis_workflow()
+    if len(sys.argv) < 2:
+        logger.error("Usage:")
+        logger.error("  Analyze single file: python analysis_example.py <path_to_audio>")
+        logger.error("  Compare two files:   python analysis_example.py <path_to_mix_a> <path_to_mix_b>")
+        sys.exit(1)
+
+    input_file_arg = sys.argv[1]
+    compare_file_arg = sys.argv[2] if len(sys.argv) > 2 else None
+
+    try:
+        analysis_workflow(input_file_arg, compare_file_arg)
+    except FileNotFoundError as e:
+         logger.error(f"\nError: Input file not found - {e}")
+    except ValueError as e:
+         logger.error(f"\nError: {e}") # Catches API key errors and validation errors
+    except KeyboardInterrupt:
+        logger.info("\nAnalysis cancelled by user.")
+    except Exception as e:
+        logger.exception(f"\nAn unexpected error occurred: {e}")
+        # Consider adding more specific exception handling if needed

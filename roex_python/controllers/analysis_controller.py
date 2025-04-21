@@ -5,10 +5,13 @@ Controller for mix/master analysis operations
 from typing import Dict, Any, List
 
 import requests
+import logging
 
 from roex_python.models.analysis import MixAnalysisRequest, AnalysisMusicalStyle
 from roex_python.providers.api_provider import ApiProvider
 
+# Initialize logger for this module
+logger = logging.getLogger(__name__)
 
 class AnalysisController:
     """Controller for mix/master analysis operations"""
@@ -21,6 +24,7 @@ class AnalysisController:
             api_provider: Provider for API interactions
         """
         self.api_provider = api_provider
+        logger.info("AnalysisController initialized.")
 
     def analyze_mix(self, request: MixAnalysisRequest) -> Dict[str, Any]:
         """
@@ -35,6 +39,7 @@ class AnalysisController:
         Raises:
             Exception: If the API request fails
         """
+        logger.info(f"Analyzing mix with parameters: {request}")
         payload = {
             "mixDiagnosisData": {
                 "audioFileLocation": request.audio_file_location,
@@ -44,11 +49,15 @@ class AnalysisController:
         }
 
         try:
+            logger.debug(f"Sending analysis request to API: {payload}")
             response = self.api_provider.post("/mixanalysis", payload)
             if "mixDiagnosisResults" in response:
+                logger.info("Analysis results received successfully.")
                 return response["mixDiagnosisResults"]
+            logger.info("Analysis results received without expected format.")
             return response
         except requests.HTTPError as e:
+            logger.error(f"Failed to analyze mix: {str(e)}")
             raise Exception(f"Failed to analyze mix: {str(e)}")
 
     def compare_mixes(self, mix_a_url: str, mix_b_url: str,
@@ -68,6 +77,7 @@ class AnalysisController:
         Raises:
             Exception: If either analysis fails
         """
+        logger.info(f"Comparing mixes: {mix_a_url} and {mix_b_url} with musical style: {musical_style}")
         request_a = MixAnalysisRequest(
             audio_file_location=mix_a_url,
             musical_style=musical_style,
@@ -90,6 +100,7 @@ class AnalysisController:
             "differences": self._compare_metrics(results_a, results_b)
         }
 
+        logger.info("Comparison results generated successfully.")
         return comparison
 
     def _extract_metrics(self, diagnosis: Dict[str, Any]) -> Dict[str, Any]:
@@ -102,6 +113,7 @@ class AnalysisController:
         Returns:
             Dictionary of extracted metrics
         """
+        logger.debug(f"Extracting metrics from diagnosis results: {diagnosis}")
         payload = diagnosis.get("payload", {})
 
         # Extract production metrics
@@ -116,6 +128,7 @@ class AnalysisController:
         # Add tonal profile
         metrics["tonal_profile"] = payload.get("tonal_profile", {})
 
+        logger.info("Metrics extracted successfully.")
         return metrics
 
     def _compare_metrics(self, results_a: Dict[str, Any], results_b: Dict[str, Any]) -> Dict[str, Any]:
@@ -129,6 +142,7 @@ class AnalysisController:
         Returns:
             Dictionary of differences
         """
+        logger.info("Comparing metrics between two analysis results.")
         metrics_a = self._extract_metrics(results_a)
         metrics_b = self._extract_metrics(results_b)
 
@@ -175,4 +189,5 @@ class AnalysisController:
 
         differences["tonal_profile"] = tonal_diff
 
+        logger.info("Metrics comparison completed successfully.")
         return differences
