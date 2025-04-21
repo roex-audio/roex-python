@@ -1,6 +1,4 @@
-"""
-Example demonstrating how to use the RoEx MCP client for multitrack mixing
-"""
+"""Example demonstrating how to use the RoEx client for multitrack mixing"""
 
 import os
 import sys
@@ -14,59 +12,62 @@ from roex_python.models import (
     InstrumentGroup, PresenceSetting, PanPreference, ReverbPreference, MusicalStyle
 )
 
+from roex_python.utils import upload_file
 
 def mix_workflow():
     """Example workflow for mixing tracks"""
 
     # Replace with your actual API key
-    api_key = "your_api_key_here"
+    api_key = "YOUR-API-KEY-KEY-HERE"
     client = RoExClient(api_key=api_key)
 
     # Check API health
     health = client.health_check()
     print(f"API Health: {health}")
 
-    # 1. Define track data for the mix
-    print("\nStarting multitrack mixing workflow...")
-    tracks = [
-        TrackData(
-            track_url="https://storage.googleapis.com/test-bucket-api-roex/masks_test/masks-bass.wav",
-            instrument_group=InstrumentGroup.BASS_GROUP,
-            presence_setting=PresenceSetting.NORMAL,
-            pan_preference=PanPreference.CENTRE,
-            reverb_preference=ReverbPreference.NONE
-        ),
-        TrackData(
-            track_url="https://storage.googleapis.com/test-bucket-api-roex/masks_test/masks-chord.wav",
-            instrument_group=InstrumentGroup.SYNTH_GROUP,
-            presence_setting=PresenceSetting.LEAD,
-            pan_preference=PanPreference.CENTRE,
-            reverb_preference=ReverbPreference.NONE
-        ),
-        TrackData(
-            track_url="https://storage.googleapis.com/test-bucket-api-roex/masks_test/masks-kick.wav",
-            instrument_group=InstrumentGroup.KICK_GROUP,
-            presence_setting=PresenceSetting.NORMAL,
-            pan_preference=PanPreference.CENTRE,
-            reverb_preference=ReverbPreference.NONE
-        ),
-        TrackData(
-            track_url="https://storage.googleapis.com/test-bucket-api-roex/masks_test/masks-percssion.wav",
-            instrument_group=InstrumentGroup.PERCS_GROUP,
-            presence_setting=PresenceSetting.NORMAL,
-            pan_preference=PanPreference.CENTRE,
-            reverb_preference=ReverbPreference.NONE
-        ),
-        TrackData(
-            track_url="https://storage.googleapis.com/test-bucket-api-roex/masks_test/masks-synth.wav",
-            instrument_group=InstrumentGroup.SYNTH_GROUP,
-            presence_setting=PresenceSetting.BACKGROUND,
-            pan_preference=PanPreference.CENTRE,
-            reverb_preference=ReverbPreference.NONE
-        )
-    ]
+    # 1. Upload and prepare track files
+    print("\nUploading track files...")
+    track_files = {
+        'bass': {
+            'path': '/Users/davidronan/Desktop/Multitracks for Testing/Masks/masks-bass.wav',
+            'instrument': InstrumentGroup.BASS_GROUP,
+            'presence': PresenceSetting.NORMAL,
+            'pan': PanPreference.CENTRE,
+            'reverb': ReverbPreference.NONE
+        },
+        'chord': {
+            'path': '/Users/davidronan/Desktop/Multitracks for Testing/Masks/masks-chord.wav',
+            'instrument': InstrumentGroup.SYNTH_GROUP,
+            'presence': PresenceSetting.LEAD,
+            'pan': PanPreference.CENTRE,
+            'reverb': ReverbPreference.NONE
+        },
+        'kick': {
+            'path': '/Users/davidronan/Desktop/Multitracks for Testing/Masks/masks-kick.wav',
+            'instrument': InstrumentGroup.KICK_GROUP,
+            'presence': PresenceSetting.NORMAL,
+            'pan': PanPreference.CENTRE,
+            'reverb': ReverbPreference.NONE
+        }
+    }
 
-    # 2. Create mix request
+    # Upload each track and create TrackData objects
+    tracks = []
+    for name, info in track_files.items():
+        print(f"Uploading {name}...")
+        url = upload_file(client, info['path'])
+        print(f"Uploaded {name}: {url}")
+        
+        tracks.append(TrackData(
+            track_url=url,
+            instrument_group=info['instrument'],
+            presence_setting=info['presence'],
+            pan_preference=info['pan'],
+            reverb_preference=info['reverb']
+        ))
+
+    # 2. Create the mix request
+    print("\nCreating mix request...")
     mix_request = MultitrackMixRequest(
         track_data=tracks,
         musical_style=MusicalStyle.ELECTRONIC,
@@ -103,23 +104,15 @@ def mix_workflow():
     # 5. Prepare final mix with gain adjustments
     gain_tracks = [
         TrackGainData(
-            track_url="https://storage.googleapis.com/test-bucket-api-roex/masks_test/masks-bass.wav",
+            track_url=tracks[0].track_url,  # bass
             gain_db=-12
         ),
         TrackGainData(
-            track_url="https://storage.googleapis.com/test-bucket-api-roex/masks_test/masks-chord.wav",
-            gain_db=0
+            track_url=tracks[1].track_url,  # chord
+            gain_db=-6
         ),
         TrackGainData(
-            track_url="https://storage.googleapis.com/test-bucket-api-roex/masks_test/masks-kick.wav",
-            gain_db=-12
-        ),
-        TrackGainData(
-            track_url="https://storage.googleapis.com/test-bucket-api-roex/masks_test/masks-percssion.wav",
-            gain_db=0
-        ),
-        TrackGainData(
-            track_url="https://storage.googleapis.com/test-bucket-api-roex/masks_test/masks-synth.wav",
+            track_url=tracks[2].track_url,  # kick
             gain_db=0
         )
     ]

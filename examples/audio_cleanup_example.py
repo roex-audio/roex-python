@@ -1,24 +1,32 @@
-"""
-Example demonstrating how to use the RoEx audio cleanup endpoint.
-"""
+"""Example demonstrating how to use the RoEx audio cleanup endpoint."""
 
 from roex_python.client import RoExClient
 from roex_python.models.audio_cleanup import AudioCleanupData, SoundSource
+from roex_python.models import UploadUrlRequest
+
+from roex_python.utils import upload_file
 
 def main():
     # Initialize the client with your API key
     client = RoExClient(
-        api_key="AIzaSyCd-uoRDeMbXek_vKn9w09FejwsTIRmlyQ",  # Replace with your actual API key
+        api_key="YOUR_API_KEY-HERE",  # Replace with your actual API key
         base_url="https://tonn.roexaudio.com"
     )
 
+    # First, upload your audio file (must be WAV or FLAC format)
+    file_path = "/path/to/your/audio.wav"  # Replace with your WAV or FLAC file
+    print("\n=== Uploading Audio File ===")
+    file_url = upload_file(client, file_path)
+    print(f"File uploaded successfully: {file_url}")
+
     # Create the audio cleanup request data
     cleanup_data = AudioCleanupData(
-        audio_file_location="https://storage.googleapis.com/test-bucket-api-roex/pop/alba_eyra_attention/alba-attention-v43-vocals.wav",  # Replace with your file URL
+        audio_file_location=file_url,
         sound_source=SoundSource.VOCAL_GROUP  # Or choose from other SoundSource enum values
     )
 
     # Send the cleanup request
+    print("\n=== Cleaning Audio File ===")
     response = client.audio_cleanup.clean_up_audio(cleanup_data)
 
     # Print the results
