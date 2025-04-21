@@ -3,10 +3,7 @@ Example demonstrating how to use the RoEx MCP client for mix enhancement
 """
 
 import os
-import sys
-
-# Add the parent directory to the Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from roex_python.utils import upload_file
 
 from roex_python.client import RoExClient
 from roex_python.models import (
@@ -15,21 +12,26 @@ from roex_python.models import (
 
 
 def enhance_workflow():
-    """Example workflow for enhancing mixes"""
+    """Example workflow demonstrating how to:
+    1. Upload audio file (WAV/FLAC/MP3)
+    2. Create and retrieve preview enhancement
+    3. Create and retrieve full enhancement
+    4. Download enhanced tracks and stems
+    """
 
-    # Replace with your actual API key
-    api_key = "your_api_key_here"
-    client = RoExClient(api_key=api_key)
+    # Initialize the client with your API key
+    client = RoExClient(
+        api_key="YOUR-API-KEY-HERE",  # Replace with your actual API key
+        base_url="https://tonn.roexaudio.com"
+    )
 
-    # Check API health
-    health = client.health_check()
-    print(f"API Health: {health}")
+    # First, upload your audio file
+    file_path = "/Users/davidronan/Desktop/mastering/mastering/mixing_secrets_mastering/0a-JesuJoy_UnmasteredWAV.wav"  # Replace with your audio file (WAV/FLAC/MP3)
+    print("\n=== Uploading Audio File ===")
+    audio_url = upload_file(client, file_path)
+    print(f"File uploaded successfully: {audio_url}")
 
-    # 1. Create enhance request
-    print("\nStarting mix enhancement workflow...")
-
-    # Replace with your actual audio file URL
-    audio_url = "https://your-audio-file-location/audio.wav"
+    print("\n=== Creating Enhancement Request ===")
 
     enhance_request = MixEnhanceRequest(
         audio_file_location=audio_url,
@@ -46,27 +48,22 @@ def enhance_workflow():
         webhook_url="https://webhook-test-786984745538.europe-west1.run.app"
     )
 
-    # 2. Method 1: Step-by-step workflow
-    print("\nMethod 1: Step-by-step workflow")
-
-    # Create preview
-    print("Creating mix enhance preview...")
+    # Get preview enhancement
+    print("\n=== Creating Enhancement Preview ===")
     preview_response = client.enhance.create_mix_enhance_preview(enhance_request)
     print(f"Preview Task ID: {preview_response.mixrevive_task_id}")
 
-    # Retrieve preview (polls until ready)
-    print("Retrieving preview enhancement...")
+    print("\n=== Retrieving Preview Enhancement ===")
     preview_results = client.enhance.retrieve_enhanced_track(preview_response.mixrevive_task_id)
-
-    # Get preview URL
     preview_url = preview_results.get("download_url_preview_revived")
     print(f"Preview Enhancement URL: {preview_url}")
 
-    # Download preview if available
-    if preview_url:
-        output_dir = "enhanced_tracks_method1"
-        os.makedirs(output_dir, exist_ok=True)
+    # Save preview enhancement
+    print("\n=== Saving Preview Enhancement ===")
+    output_dir = "enhanced_tracks"
+    os.makedirs(output_dir, exist_ok=True)
 
+    if preview_url:
         preview_filename = os.path.join(output_dir, "enhanced_preview.wav")
         success = client.api_provider.download_file(preview_url, preview_filename)
         if success:
@@ -74,30 +71,28 @@ def enhance_workflow():
         else:
             print("Failed to download preview")
 
-        # Download preview stems if available
+        # Save preview stems if available
         preview_stems = preview_results.get("stems", {})
-        for stem_name, stem_url in preview_stems.items():
-            stem_filename = os.path.join(output_dir, f"enhanced_preview_stem_{stem_name}.wav")
-            client.api_provider.download_file(stem_url, stem_filename)
+        if preview_stems:
+            print("\nDownloading preview stems...")
+            for stem_name, stem_url in preview_stems.items():
+                stem_filename = os.path.join(output_dir, f"enhanced_preview_stem_{stem_name}.wav")
+                if client.api_provider.download_file(stem_url, stem_filename):
+                    print(f"Downloaded {stem_name} stem to {stem_filename}")
 
-    # Create full enhancement
-    print("Creating full mix enhancement...")
+    # Get full enhancement
+    print("\n=== Creating Full Enhancement ===")
     full_response = client.enhance.create_mix_enhance(enhance_request)
     print(f"Full Enhancement Task ID: {full_response.mixrevive_task_id}")
 
-    # Retrieve full enhancement (polls until ready)
-    print("Retrieving full enhancement...")
+    print("\n=== Retrieving Full Enhancement ===")
     full_results = client.enhance.retrieve_enhanced_track(full_response.mixrevive_task_id)
-
-    # Get full enhancement URL
     final_url = full_results.get("download_url_revived")
     print(f"Final Enhancement URL: {final_url}")
 
-    # Download full enhancement if available
+    # Save full enhancement
+    print("\n=== Saving Full Enhancement ===")
     if final_url:
-        output_dir = "enhanced_tracks_method1"
-        os.makedirs(output_dir, exist_ok=True)
-
         final_filename = os.path.join(output_dir, "enhanced_full.wav")
         success = client.api_provider.download_file(final_url, final_filename)
         if success:
@@ -105,11 +100,14 @@ def enhance_workflow():
         else:
             print("Failed to download full enhancement")
 
-        # Download final stems if available
+        # Save final stems if available
         final_stems = full_results.get("stems", {})
-        for stem_name, stem_url in final_stems.items():
-            stem_filename = os.path.join(output_dir, f"enhanced_full_stem_{stem_name}.wav")
-            client.api_provider.download_file(stem_url, stem_filename)
+        if final_stems:
+            print("\nDownloading final stems...")
+            for stem_name, stem_url in final_stems.items():
+                stem_filename = os.path.join(output_dir, f"enhanced_full_stem_{stem_name}.wav")
+                if client.api_provider.download_file(stem_url, stem_filename):
+                    print(f"Downloaded {stem_name} stem to {stem_filename}")
 
 if __name__ == "__main__":
     enhance_workflow()
