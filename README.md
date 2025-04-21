@@ -1,6 +1,6 @@
 # RoEx Python
 
-[![PyPI version](https://badge.fury.io/py/roex-mcp.svg)](https://badge.fury.io/py/roex-mcp)
+[![PyPI version](https://badge.fury.io/py/roex-python.svg)](https://badge.fury.io/py/roex-python)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A Python pip package for the [RoEx Tonn API](https://tonn-portal.roexaudio.com) using the MCP (Model-Controller-Provider) architecture pattern. This package provides a clean, type-safe interface to interact with the RoEx Tonn API for audio mixing, mastering, analysis, and enhancement.
