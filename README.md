@@ -11,6 +11,7 @@ A Python pip package for the [RoEx Tonn API](https://tonn-portal.roexaudio.com) 
 - **Audio Mastering**: Master individual tracks or entire albums
 - **Mix Analysis**: Analyze and compare audio mixes
 - **Mix Enhancement**: Enhance and improve existing mixes
+- **Audio Cleanup**: Clean up specific instrument tracks (vocals, guitars, etc.)
 - **Asynchronous Processing**: Built-in polling for long-running tasks
 - **File Downloads**: Easily download processed audio files
 
@@ -23,13 +24,19 @@ pip install roex-python
 ## Quick Start
 
 ```python
+import os
 from roex_python.client import RoExClient
 from roex_python.models import (
     MasteringRequest, MusicalStyle, DesiredLoudness
 )
 
+# Get API key from environment variable (Recommended)
+api_key = os.getenv("ROEX_API_KEY")
+if not api_key:
+    raise ValueError("ROEX_API_KEY environment variable not set.")
+
 # Initialize the client with your API key
-client = RoExClient(api_key="your_api_key_here")
+client = RoExClient(api_key=api_key)
 
 # Create a mastering request
 mastering_request = MasteringRequest(
@@ -53,8 +60,14 @@ print(f"Final Master URL: {final_url}")
 
 ## Documentation
 
--   **API Documentation**: For details on the underlying RoEx Tonn API endpoints and parameters, refer to the [Official API Documentation]([https://roex.stoplight.io/]).
--   **Usage Examples**: Practical examples demonstrating various workflows can be found in the [`examples/`](./examples/README.md) directory.
+-   **API Documentation**: For details on the underlying RoEx Tonn API endpoints and parameters, refer to the [Official API Documentation](https://roex.stoplight.io/).
+-   **Usage Examples**: Practical examples demonstrating various workflows can be found in the [`examples/`](./examples/README.md) directory. These scripts showcase common use cases and include robust audio validation (checking length, sample rate, silence) before processing.
+    -   `mix_example.py`: Demonstrates submitting multiple tracks for AI mixing.
+    -   `mastering_example.py`: Shows how to master a single audio file.
+    -   `analysis_example.py`: Provides an example of analyzing a mix or master.
+    -   `enhance_example.py`: Illustrates enhancing an existing mix.
+    -   `audio_cleanup_example.py`: Shows how to use the audio cleanup feature for specific instrument types.
+    *Note: Example scripts require the `soundfile` and `numpy` libraries (`pip install soundfile numpy`).*
 -   **Package Reference**: Detailed information about the Python classes, methods, and models provided by this package can be found in the docstrings within the source code.
 
 ### Example Workflows
