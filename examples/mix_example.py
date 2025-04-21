@@ -1,10 +1,6 @@
-"""Example demonstrating how to use the RoEx client for multitrack mixing"""
+"""Example demonstrating how to use the RoEx client for multitrack mixing."""
 
 import os
-import sys
-
-# Add the parent directory to the Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from roex_python.client import RoExClient
 from roex_python.models import (
@@ -15,18 +11,21 @@ from roex_python.models import (
 from roex_python.utils import upload_file
 
 def mix_workflow():
-    """Example workflow for mixing tracks"""
+    """Example workflow demonstrating how to:
+    1. Upload multiple audio tracks
+    2. Create and retrieve mix preview
+    3. Apply gain adjustments
+    4. Create final mix with stems
+    5. Download all files
+    """
 
-    # Replace with your actual API key
-    api_key = "YOUR-API-KEY-KEY-HERE"
-    client = RoExClient(api_key=api_key)
+    # Initialize the client with your API key
+    client = RoExClient(
+        api_key="YOUR-API-KEY-HERE",  # Replace with your actual API key
+        base_url="https://tonn.roexaudio.com"
+    )
 
-    # Check API health
-    health = client.health_check()
-    print(f"API Health: {health}")
-
-    # 1. Upload and prepare track files
-    print("\nUploading track files...")
+    print("\n=== Uploading Track Files ===")
     track_files = {
         'bass': {
             'path': '/Users/davidronan/Desktop/Multitracks for Testing/Masks/masks-bass.wav',
@@ -66,8 +65,7 @@ def mix_workflow():
             reverb_preference=info['reverb']
         ))
 
-    # 2. Create the mix request
-    print("\nCreating mix request...")
+    print("\n=== Creating Mix Request ===")
     mix_request = MultitrackMixRequest(
         track_data=tracks,
         musical_style=MusicalStyle.ELECTRONIC,
@@ -75,13 +73,11 @@ def mix_workflow():
         webhook_url="https://webhook-test-786984745538.europe-west1.run.app"
     )
 
-    # 3. Create mix preview
-    print("Creating mix preview...")
+    print("\n=== Creating Mix Preview ===")
     mix_response = client.mix.create_mix_preview(mix_request)
     print(f"Mix Task ID: {mix_response.multitrack_task_id}")
 
-    # 4. Retrieve preview mix (polls until ready)
-    print("Retrieving preview mix...")
+    print("\n=== Retrieving Preview Mix ===")
     preview_results = client.mix.retrieve_preview_mix(
         mix_response.multitrack_task_id,
         retrieve_fx_settings=True
@@ -101,7 +97,7 @@ def mix_workflow():
             for setting_type, values in track_settings.items():
                 print(f"  {setting_type}: {values}")
 
-    # 5. Prepare final mix with gain adjustments
+    print("\n=== Preparing Final Mix ===")
     gain_tracks = [
         TrackGainData(
             track_url=tracks[0].track_url,  # bass
@@ -123,14 +119,13 @@ def mix_workflow():
         return_stems=True
     )
 
-    # 6. Retrieve final mix
-    print("Retrieving final mix...")
+    print("\n=== Retrieving Final Mix ===")
     final_results = client.mix.retrieve_final_mix(final_request)
 
     final_url = final_results.get('download_url_mixed')
     print(f"Final Mix URL: {final_url}")
 
-    # 7. Download the final mix if needed
+    print("\n=== Saving Final Mix ===")
     output_dir = "final_mixes"
     os.makedirs(output_dir, exist_ok=True)
 
@@ -142,12 +137,14 @@ def mix_workflow():
         else:
             print("Failed to download final mix")
 
-    # 8. Print stem URLs if available
+    # Save stems if available
     stems = final_results.get('stems', {})
     if stems:
-        print("\nStem URLs:")
+        print("\nDownloading stems...")
         for name, url in stems.items():
-            print(f"  {name}: {url}")
+            stem_filename = os.path.join(output_dir, f"final_mix_stem_{name}.wav")
+            if client.api_provider.download_file(url, stem_filename):
+                print(f"Downloaded {name} stem to {stem_filename}")
 
             # Download stems if desired
             stem_filename = os.path.join(output_dir, f"stem_{name}.wav")

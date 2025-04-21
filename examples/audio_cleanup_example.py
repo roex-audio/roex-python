@@ -6,10 +6,16 @@ from roex_python.models import UploadUrlRequest
 
 from roex_python.utils import upload_file
 
-def main():
+def cleanup_workflow():
+    """Example workflow demonstrating how to:
+    1. Upload audio file (WAV/FLAC)
+    2. Clean up audio based on source type
+    3. Download cleaned audio file
+    """
+
     # Initialize the client with your API key
     client = RoExClient(
-        api_key="YOUR_API_KEY-HERE",  # Replace with your actual API key
+        api_key="YOUR-API-KEY-HERE",  # Replace with your actual API key
         base_url="https://tonn.roexaudio.com"
     )
 
@@ -29,19 +35,31 @@ def main():
     print("\n=== Cleaning Audio File ===")
     response = client.audio_cleanup.clean_up_audio(cleanup_data)
 
-    # Print the results
     print("\n=== Audio Cleanup Results ===")
-    print(f"Error: {response.error}")
-    print(f"Message: {response.message}")
-    print(f"Info: {response.info}")
+    if response.error:
+        print(f"Error: {response.message}")
+        return
 
-    if response.audio_cleanup_results:
-        results = response.audio_cleanup_results
-        print(f"\nCompletion Time: {results.completion_time}")
-        print(f"Error Flag: {results.error}")
-        print(f"Info: {results.info}")
-        if results.cleaned_audio_file_location:
-            print(f"Cleaned Audio File: {results.cleaned_audio_file_location}")
+    results = response.audio_cleanup_results
+    if not results:
+        print("No cleanup results received")
+        return
+
+    print(f"Completion Time: {results.completion_time}")
+    print(f"Info: {results.info}")
+
+    # Save cleaned audio file
+    if results.cleaned_audio_file_location:
+        print("\n=== Saving Cleaned Audio ===")
+        output_dir = "cleaned_audio"
+        os.makedirs(output_dir, exist_ok=True)
+
+        output_file = os.path.join(output_dir, "cleaned_audio.wav")
+        success = client.api_provider.download_file(results.cleaned_audio_file_location, output_file)
+        if success:
+            print(f"Downloaded cleaned audio to {output_file}")
+        else:
+            print("Failed to download cleaned audio")
 
 if __name__ == "__main__":
-    main()
+    cleanup_workflow()
