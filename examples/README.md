@@ -9,7 +9,11 @@ This directory contains example scripts demonstrating how to use the `roex-pytho
     ```bash
     pip install roex-python
     ```
-3.  **API Key**: Obtain your API key from the [RoEx Tonn API Portal](https://tonn-portal.roexaudio.com). You need to set it as an environment variable before running any example:
+3.  **Example Dependencies**: The examples also require `soundfile` and `numpy` for audio validation:
+    ```bash
+    pip install soundfile numpy
+    ```
+4.  **API Key**: Obtain your API key from the [RoEx Tonn API Portal](https://tonn-portal.roexaudio.com). You need to set it as an environment variable before running any example:
     ```bash
     export ROEX_API_KEY='your_actual_api_key_here'
     ```
@@ -26,7 +30,7 @@ Most examples follow a similar pattern:
 python <example_script_name>.py [arguments...]
 ```
 
-These examples utilize helper functions from `common.py` for tasks like retrieving the API key from the environment, validating input audio files, and ensuring output directories exist.
+These examples utilize helper functions from `common.py` for tasks like retrieving the API key from the environment, validating input audio files (checking existence, format, and properties like length, sample rate, and silence), and ensuring output directories exist.
 
 ## Available Examples
 
