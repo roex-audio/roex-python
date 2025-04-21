@@ -42,6 +42,12 @@ from roex_python.models.enhance import (
     MixEnhanceResponse
 )
 
+# Import upload models
+from roex_python.models.upload import (
+    UploadUrlRequest,
+    UploadUrlResponse
+)
+
 __all__ = [
     # Common models
     "DesiredLoudness",
@@ -71,5 +77,9 @@ __all__ = [
     # Enhance models
     "EnhanceMusicalStyle",
     "MixEnhanceRequest",
-    "MixEnhanceResponse"
+    "MixEnhanceResponse",
+
+    # Upload models
+    "UploadUrlRequest",
+    "UploadUrlResponse"
 ]

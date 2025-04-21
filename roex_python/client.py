@@ -2,12 +2,13 @@
 Main RoEx client interface that unifies all controllers
 """
 
-from roex_python.controllers.analysis_controller import AnalysisController
-from roex_python.controllers.enhance_controller import EnhanceController
-from roex_python.controllers.mastering_controller import MasteringController
-from roex_python.controllers.mix_controller import MixController
-from roex_python.controllers.audio_cleanup_controller import AudioCleanupController
-from roex_python.providers.api_provider import ApiProvider
+from .controllers.mix_controller import MixController
+from .controllers.mastering_controller import MasteringController
+from .controllers.analysis_controller import AnalysisController
+from .controllers.enhance_controller import EnhanceController
+from .controllers.audio_cleanup_controller import AudioCleanupController
+from .controllers.upload_controller import UploadController
+from .providers.api_provider import ApiProvider
 
 
 class RoExClient:
@@ -31,6 +32,7 @@ class RoExClient:
         self.analysis = AnalysisController(self.api_provider)
         self.enhance = EnhanceController(self.api_provider)
         self.audio_cleanup = AudioCleanupController(self.api_provider)
+        self.upload = UploadController(self.api_provider)
 
     def health_check(self) -> str:
         """
