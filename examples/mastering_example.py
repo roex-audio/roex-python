@@ -23,7 +23,7 @@ def mastering_workflow():
 
     # Initialize the client with your API key
     client = RoExClient(
-        api_key="AIzaSyB9iUIXk3IOxZKElJJqnzII3690ABfyZ_Y",  # Replace with your actual API key
+        api_key="YOUR-API-KEY-HERE",  # Replace with your actual API key
         base_url="https://tonn.roexaudio.com"
     )
 
@@ -57,8 +57,8 @@ def mastering_workflow():
 
     # Get the final master
     print("\n=== Retrieving Final Master ===")
-    final_url = client.mastering.retrieve_final_master(mastering_response.mastering_task_id)
-    final_url = final_url.get('download_url_mastered')
+    final_url_response = client.mastering.retrieve_final_master(mastering_response.mastering_task_id)
+    final_url = final_url_response.get('download_url_mastered')
     print(f"Final Master URL: {final_url}")
 
     # Save the final master
