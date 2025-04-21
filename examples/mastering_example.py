@@ -54,7 +54,18 @@ from roex_python.models import (
 )
 from roex_python.utils import upload_file
 
-from common import get_api_key, validate_audio_file, ensure_output_dir, setup_logger
+from common import (
+    get_api_key, 
+    validate_audio_file, 
+    ensure_output_dir, 
+    setup_logger,
+    validate_audio_properties, # Import new validation function
+    AudioValidationError # Import base custom exception
+)
+from soundfile import SoundFileError # Import directly from soundfile
+
+# Constants
+MASTERING_MAX_DURATION_SECS = 600 # 10 minutes for mastering
 
 # Set up logger for this module
 logger = setup_logger(__name__)
@@ -246,13 +257,12 @@ def mastering_workflow(input_files: List[str]):
     validated_files = []
     for f in input_files:
         try:
-            validated_files.append(validate_audio_file(f))
-        except FileNotFoundError as e:
-            logger.error(f"Error: Input file not found - {e}")
-            return # Stop if any file is missing
-        except ValueError as e:
-            logger.error(f"Error: Invalid input file - {e}")
-            return # Stop if any file is invalid
+            validated_path = validate_audio_file(f)
+            validate_audio_properties(validated_path, MASTERING_MAX_DURATION_SECS)
+            validated_files.append(validated_path)
+        except (FileNotFoundError, ValueError, AudioValidationError, SoundFileError) as e:
+            logger.error(f"Error: Input file not found or invalid - {e}. Aborting mastering workflow.")
+            return # Stop if any file fails validation
 
     if len(validated_files) == 1:
         # Single track mastering

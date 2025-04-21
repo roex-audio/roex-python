@@ -46,6 +46,7 @@ import sys
 import time
 from pathlib import Path
 from typing import Dict, Any, Optional, List
+from soundfile import SoundFileError
 
 from roex_python.client import RoExClient
 from roex_python.models import (
@@ -54,7 +55,17 @@ from roex_python.models import (
 )
 
 from roex_python.utils import upload_file
-from common import get_api_key, validate_audio_file, ensure_output_dir, setup_logger
+from common import (
+    get_api_key, 
+    validate_audio_file, 
+    ensure_output_dir, 
+    setup_logger,
+    validate_audio_properties, 
+    AudioValidationError
+)
+
+# Constants
+MIX_MAX_DURATION_SECS = 480
 
 # Set up logger for this module
 logger = setup_logger(__name__)
@@ -78,6 +89,9 @@ def configure_track(file_path: Path, instrument: InstrumentGroup, presence: Pres
         # and returns a Path object on success.
         file_path_obj = validate_audio_file(str(file_path), allowed_extensions={"wav", "flac"})
 
+        # Validate audio properties (duration, sample rate, silence)
+        validate_audio_properties(file_path_obj, MIX_MAX_DURATION_SECS)
+
         # If validation succeeds, return the config dict
         return {
             'path': file_path_obj, # Use the returned Path object
@@ -87,9 +101,9 @@ def configure_track(file_path: Path, instrument: InstrumentGroup, presence: Pres
             'volume': volume,
             'upload_url': None # Placeholder for uploaded URL
         }
-    except (FileNotFoundError, ValueError) as e:
-        # Log the specific error raised by validate_audio_file
-        logger.error(f"Validation failed for track {instrument.name} ({file_path}): {e}")
+    except (FileNotFoundError, ValueError, AudioValidationError, SoundFileError) as e:
+        # Log the specific error raised by validation functions
+        logger.error(f"Configuration failed for track {instrument.name} due to validation error: {e}")
         return None # Indicate failure
 
 def mix_workflow(args: argparse.Namespace):

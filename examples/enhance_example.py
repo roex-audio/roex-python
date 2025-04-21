@@ -41,16 +41,28 @@ Example Usage:
 
 import os
 import sys
+import time
+import json
 from pathlib import Path
+from soundfile import SoundFileError
 
 from roex_python.client import RoExClient
 from roex_python.models.enhance import MixEnhanceRequest, EnhanceMusicalStyle
-from roex_python.models import LoudnessPreference
+from roex_python.models import LoudnessPreference, InstrumentGroup
 from roex_python.utils import upload_file
-from common import get_api_key, validate_audio_file, ensure_output_dir, setup_logger
+from common import (
+    get_api_key, 
+    validate_audio_file, 
+    ensure_output_dir, 
+    setup_logger, 
+    validate_audio_properties, 
+    AudioValidationError
+)
 
 # Set up logger for this module
 logger = setup_logger(__name__)
+
+ENHANCE_MAX_DURATION_SECS = 600
 
 def enhance_workflow(input_file: str = None):
     """Run the mix enhancement workflow.
@@ -74,8 +86,17 @@ def enhance_workflow(input_file: str = None):
     if input_file is None:
         input_file = "/path/to/your/audio.wav"  # Replace with your WAV or FLAC file
     
-    file_path = validate_audio_file(input_file)
-    logger.info(f"\n=== Uploading {file_path.name} ===")
+    try:
+        file_path = validate_audio_file(input_file)
+        validate_audio_properties(file_path, ENHANCE_MAX_DURATION_SECS)
+        logger.info(f"\n=== Uploading {file_path.name} ===")
+    except (FileNotFoundError, ValueError, AudioValidationError) as e:
+        logger.error(f"Validation failed for {input_file}: {e}. Aborting enhance workflow.")
+        return
+    except Exception as e:
+        logger.error(f"Unexpected validation error for {input_file}: {e}. Aborting enhance workflow.")
+        return
+
     audio_url = upload_file(client, str(file_path))
     logger.info("File uploaded successfully to RoEx secure storage")
     logger.info(f"Temporary storage location: {audio_url}")
