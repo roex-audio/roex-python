@@ -3,18 +3,19 @@ Example demonstrating how to use the RoEx MCP client for mix analysis
 """
 
 import os
-import sys
 import json
-
-# Add the parent directory to the Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from roex_python.utils import upload_file
 
 from roex_python.client import RoExClient
 from roex_python.models import MixAnalysisRequest, AnalysisMusicalStyle
 
 
 def print_analysis_results(results):
-    """Pretty print analysis results"""
+    """Pretty print the analysis results from the mix analysis endpoint.
+    
+    Args:
+        results: Dictionary containing the analysis results from the API
+    """
     if "payload" not in results:
         print("No payload data found in results.")
         return
@@ -47,21 +48,26 @@ def print_analysis_results(results):
 
 
 def analysis_workflow():
-    """Example workflow for analyzing mixes"""
+    """Example workflow demonstrating how to:
+    1. Upload audio files (WAV/FLAC)
+    2. Analyze a single mix
+    3. Compare two mixes
+    4. Save results to files
+    """
 
-    # Replace with your actual API key
-    api_key = "your_api_key_here"
-    client = RoExClient(api_key=api_key)
+    # Initialize the client with your API key
+    client = RoExClient(
+        api_key="YOUR_API-KEY-HERE",  # Replace with your actual API key
+        base_url="https://tonn.roexaudio.com"
+    )
 
-    # Check API health
-    health = client.health_check()
-    print(f"API Health: {health}")
+    # First, upload your audio file (must be WAV or FLAC format)
+    file_path = "/path/to/your/audio_1.wav"  # Replace with your WAV or FLAC file
+    print("\n=== Uploading Audio File ===")
+    audio_url = upload_file(client, file_path)
+    print(f"File uploaded successfully: {audio_url}")
 
-    # 1. Single Mix Analysis
-    print("\nStarting mix analysis...")
-
-    # Replace with your actual audio file URL
-    audio_url = "https://your-audio-file-location/audio.wav"
+    print("\n=== Starting Mix Analysis ===")
 
     analysis_request = MixAnalysisRequest(
         audio_file_location=audio_url,
@@ -69,13 +75,14 @@ def analysis_workflow():
         is_master=True
     )
 
-    # 2. Analyze mix
+    # Send the analysis request
+    print("\n=== Analyzing Mix ===")
     analysis_results = client.analysis.analyze_mix(analysis_request)
 
-    # 3. Print analysis results
+    # Print analysis results
     print_analysis_results(analysis_results)
 
-    # 4. Save results to file
+    # Save analysis results to file
     output_dir = "analysis_results"
     os.makedirs(output_dir, exist_ok=True)
 
@@ -84,21 +91,23 @@ def analysis_workflow():
 
     print(f"\nAnalysis results saved to {output_dir}/analysis.json")
 
-    # 5. Compare Two Mixes (if needed)
-    print("\nComparing two mixes...")
+    # Optional: Compare two mixes
+    print("\n=== Comparing Two Mixes ===")
 
-    # Replace with your actual audio file URLs
-    mix_a_url = "https://your-audio-file-location/mix_a.wav"
-    mix_b_url = "https://your-audio-file-location/mix_b.wav"
+    # Upload second mix for comparison
+    mix_b_path = "/path/to/your/audio_2.wav"  # Replace with your WAV or FLAC file
+    print("\nUploading second mix...")
+    mix_b_url = upload_file(client, mix_b_path)
+    print(f"Second mix uploaded successfully: {mix_b_url}")
 
     comparison_results = client.analysis.compare_mixes(
-        mix_a_url=mix_a_url,
+        mix_a_url=audio_url,  # Use our first mix as mix A
         mix_b_url=mix_b_url,
         musical_style=AnalysisMusicalStyle.ROCK,
         is_master=True
     )
 
-    # 6. Print comparison results
+    # Print comparison results
     print("\n==== Mix Comparison Results ====")
 
     # Print key differences
@@ -142,7 +151,7 @@ def analysis_workflow():
                         print(f"    Mix A: {diff.get('mix_a_value', 'N/A')}")
                         print(f"    Mix B: {diff.get('mix_b_value', 'N/A')}")
 
-    # 7. Save comparison results to file
+    # Save comparison results to file
     with open(os.path.join(output_dir, "comparison.json"), "w") as f:
         json.dump(comparison_results, f, indent=2)
 
