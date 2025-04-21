@@ -13,6 +13,7 @@ A Python pip package for the [RoEx Tonn API](https://tonn-portal.roexaudio.com) 
 - **Mix Enhancement**: Enhance and improve existing mixes
 - **Audio Cleanup**: Clean up specific instrument tracks (vocals, guitars, etc.)
 - **Asynchronous Processing**: Built-in polling for long-running tasks
+- **Secure File Uploads**: Uses temporary signed URLs for direct and secure uploads to cloud storage.
 - **File Downloads**: Easily download processed audio files
 
 ## Installation
