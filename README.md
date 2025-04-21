@@ -3,7 +3,9 @@
 [![PyPI version](https://badge.fury.io/py/roex-python.svg)](https://badge.fury.io/py/roex-python)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A Python pip package for the [RoEx Tonn API](https://tonn-portal.roexaudio.com) using the MCP (Model-Controller-Provider) architecture pattern. This package provides a clean, type-safe interface to interact with the RoEx Tonn API for audio mixing, mastering, analysis, and enhancement.
+roex-python is a powerful Python package that simplifies and automates advanced audio processing tasks for music producers, sound engineers, and developers. Whether mixing, mastering, or applying custom DSP algorithms, roex-python directly brings cutting-edge audio manipulation to your Python environment.
+
+This pip package is designed to work with the [RoEx Tonn API](https://tonn-portal.roexaudio.com). This package provides a clean, type-safe interface to interact with the RoEx Tonn API for audio mixing, mastering, analysis, and enhancement.
 
 ## Features
 
