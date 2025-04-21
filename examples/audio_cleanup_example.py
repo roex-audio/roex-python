@@ -55,7 +55,11 @@ from roex_python.models.audio_cleanup import AudioCleanupData, SoundSource
 from roex_python.models import UploadUrlRequest
 from roex_python.utils import upload_file
 
-from common import get_api_key, validate_audio_file, ensure_output_dir, setup_logger
+from common import get_api_key, validate_audio_file, ensure_output_dir, setup_logger, validate_audio_properties, AudioValidationError
+from soundfile import SoundFileError
+
+# Constants
+CLEANUP_MAX_DURATION_SECS = 600
 
 # Set up logger for this module
 logger = setup_logger(__name__)
@@ -83,6 +87,7 @@ def cleanup_workflow(input_file: str = None):
     
     file_path = validate_audio_file(input_file)
     logger.info(f"\n=== Uploading {file_path.name} ===")
+    validate_audio_properties(file_path, CLEANUP_MAX_DURATION_SECS)
     file_url = upload_file(client, str(file_path))
     logger.info("File uploaded successfully to RoEx secure storage")
     logger.info(f"Temporary storage location: {file_url}")
@@ -138,6 +143,8 @@ if __name__ == "__main__":
     try:
         input_file = sys.argv[1] if len(sys.argv) > 1 else None
         cleanup_workflow(input_file)
+    except (FileNotFoundError, ValueError, AudioValidationError, SoundFileError) as e:
+        logger.error(f"Error: {e}")
     except KeyboardInterrupt:
         logger.info("\nCleanup cancelled by user")
     except Exception as e:

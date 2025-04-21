@@ -52,10 +52,14 @@ from roex_python.client import RoExClient
 from roex_python.models import MixAnalysisRequest, AnalysisMusicalStyle
 from roex_python.utils import upload_file
 
-from common import get_api_key, validate_audio_file, ensure_output_dir, setup_logger
+from common import get_api_key, validate_audio_file, ensure_output_dir, setup_logger, validate_audio_properties, AudioValidationError
+from soundfile import SoundFileError
 
 # Set up logger for this module
 logger = setup_logger(__name__)
+
+# Constants
+ANALYSIS_MAX_DURATION_SECS = 600
 
 def print_analysis_results(results):
     """Pretty print the analysis results from the mix analysis endpoint.
@@ -175,6 +179,15 @@ def analysis_workflow(input_file: str, compare_file: str = None):
 
     # --- Validate and Upload Mix A ---
     file_path_a = validate_audio_file(input_file)
+    try:
+        validate_audio_properties(file_path_a, ANALYSIS_MAX_DURATION_SECS)
+    except (FileNotFoundError, ValueError, AudioValidationError, SoundFileError) as e:
+        logger.error(f"Validation failed for {input_file}: {e}. Aborting analysis workflow.")
+        return # Abort if validation fails
+    except Exception as e:
+        logger.error(f"Unexpected validation error for {input_file}: {e}. Aborting analysis workflow.")
+        return # Abort on unexpected errors too
+
     logger.info(f"\n=== Uploading {file_path_a.name} (Mix A) ===")
     try:
         audio_url_a = upload_file(client, str(file_path_a))
@@ -215,6 +228,15 @@ def analysis_workflow(input_file: str, compare_file: str = None):
     if compare_file:
         # --- Validate and Upload Mix B ---
         file_path_b = validate_audio_file(compare_file)
+        try:
+            validate_audio_properties(file_path_b, ANALYSIS_MAX_DURATION_SECS)
+        except (FileNotFoundError, ValueError, AudioValidationError, SoundFileError) as e:
+            logger.error(f"Validation failed for {compare_file}: {e}. Aborting comparison.")
+            return # Abort if validation fails
+        except Exception as e:
+            logger.error(f"Unexpected validation error for {compare_file}: {e}. Aborting comparison.")
+            return # Abort on unexpected errors too
+
         logger.info(f"\n=== Uploading {file_path_b.name} (Mix B) ===")
         try:
             audio_url_b = upload_file(client, str(file_path_b))
