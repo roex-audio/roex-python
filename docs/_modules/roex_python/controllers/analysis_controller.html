@@ -1,0 +1,365 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>roex_python.controllers.analysis_controller &mdash; roex-python 1.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=61243dd2"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            roex-python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">roex-python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">roex_python.controllers.analysis_controller</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for roex_python.controllers.analysis_controller</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Controller for mix/master analysis operations</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">List</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">roex_python.models.analysis</span><span class="w"> </span><span class="kn">import</span> <span class="n">MixAnalysisRequest</span><span class="p">,</span> <span class="n">AnalysisMusicalStyle</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">roex_python.providers.api_provider</span><span class="w"> </span><span class="kn">import</span> <span class="n">ApiProvider</span>
+
+<span class="c1"># Initialize logger for this module</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<div class="viewcode-block" id="AnalysisController">
+<a class="viewcode-back" href="../../../api.html#roex_python.controllers.analysis_controller.AnalysisController">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AnalysisController</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Controller for submitting audio tracks for analysis and comparison via the RoEx API.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">api_provider</span><span class="p">:</span> <span class="n">ApiProvider</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the AnalysisController.</span>
+
+<span class="sd">        Typically, this controller is accessed via `client.analysis` rather than</span>
+<span class="sd">        instantiated directly.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            api_provider (ApiProvider): An instance of ApiProvider configured with</span>
+<span class="sd">                the base URL and API key.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">api_provider</span> <span class="o">=</span> <span class="n">api_provider</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;AnalysisController initialized.&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="AnalysisController.analyze_mix">
+<a class="viewcode-back" href="../../../api.html#roex_python.controllers.analysis_controller.AnalysisController.analyze_mix">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">analyze_mix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">:</span> <span class="n">MixAnalysisRequest</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Analyze a single mix or master track to retrieve detailed metrics.</span>
+
+<span class="sd">        This method sends the track URL and analysis parameters to the API</span>
+<span class="sd">        and returns the analysis results synchronously.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            request (MixAnalysisRequest): An object containing the track URL</span>
+<span class="sd">                (`audio_file_location`), the musical style for reference</span>
+<span class="sd">                (`musical_style`), and whether the track is mastered (`is_master`).</span>
+<span class="sd">                The URL must point to an accessible WAV or FLAC file.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dict[str, Any]: A dictionary containing the analysis results.</span>
+<span class="sd">                The structure typically includes detailed metrics under a &#39;payload&#39; key,</span>
+<span class="sd">                covering loudness, dynamics, stereo field, phase, tonal balance, etc.</span>
+<span class="sd">                Check the official RoEx API documentation for the full structure.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            requests.exceptions.RequestException: If the API request fails due to network</span>
+<span class="sd">                                                 issues or invalid endpoint.</span>
+<span class="sd">            Exception: If the API returns an error response (e.g., 4xx, 5xx status codes)</span>
+<span class="sd">                       indicating issues like invalid input, file access problems, or</span>
+<span class="sd">                       server errors.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; from roex_python.models import MixAnalysisRequest, AnalysisMusicalStyle</span>
+<span class="sd">            &gt;&gt;&gt; # Assume &#39;client&#39; is an initialized RoExClient</span>
+<span class="sd">            &gt;&gt;&gt; # Assume &#39;track_url&#39; is a URL obtained after uploading a local file</span>
+<span class="sd">            &gt;&gt;&gt; analysis_request = MixAnalysisRequest(</span>
+<span class="sd">            ...     audio_file_location=track_url,</span>
+<span class="sd">            ...     musical_style=AnalysisMusicalStyle.ROCK_PUNK,</span>
+<span class="sd">            ...     is_master=False</span>
+<span class="sd">            ... )</span>
+<span class="sd">            &gt;&gt;&gt; try:</span>
+<span class="sd">            &gt;&gt;&gt;     analysis_results = client.analysis.analyze_mix(analysis_request)</span>
+<span class="sd">            &gt;&gt;&gt;     print(f&quot;Analysis Loudness (LUFS): {analysis_results.get(&#39;payload&#39;, {}).get(&#39;integrated_loudness_lufs&#39;)}&quot;)</span>
+<span class="sd">            &gt;&gt;&gt;     # Explore other metrics in analysis_results[&#39;payload&#39;]</span>
+<span class="sd">            &gt;&gt;&gt; except Exception as e:</span>
+<span class="sd">            &gt;&gt;&gt;     print(f&quot;Error analyzing mix: {e}&quot;)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Analyzing mix with parameters: </span><span class="si">{</span><span class="n">request</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;mixDiagnosisData&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;audioFileLocation&quot;</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">audio_file_location</span><span class="p">,</span>
+                <span class="s2">&quot;musicalStyle&quot;</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">musical_style</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="s2">&quot;isMaster&quot;</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">is_master</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sending analysis request to API: </span><span class="si">{</span><span class="n">payload</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">api_provider</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/mixanalysis&quot;</span><span class="p">,</span> <span class="n">payload</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s2">&quot;mixDiagnosisResults&quot;</span> <span class="ow">in</span> <span class="n">response</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Analysis results received successfully.&quot;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">response</span><span class="p">[</span><span class="s2">&quot;mixDiagnosisResults&quot;</span><span class="p">]</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Analysis results received without expected format.&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">response</span>
+        <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">HTTPError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to analyze mix: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to analyze mix: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unexpected error analyzing mix: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span></div>
+
+
+<div class="viewcode-block" id="AnalysisController.compare_mixes">
+<a class="viewcode-back" href="../../../api.html#roex_python.controllers.analysis_controller.AnalysisController.compare_mixes">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compare_mixes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mix_a_url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">mix_b_url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+                      <span class="n">musical_style</span><span class="p">:</span> <span class="n">AnalysisMusicalStyle</span><span class="p">,</span> <span class="n">is_master</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Analyze two mixes and provide a comparison of their key metrics.</span>
+
+<span class="sd">        This method internally calls `analyze_mix` for both provided track URLs</span>
+<span class="sd">        and then computes differences between key metrics.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            mix_a_url (str): URL of the first mix (must be accessible WAV/FLAC).</span>
+<span class="sd">            mix_b_url (str): URL of the second mix (must be accessible WAV/FLAC).</span>
+<span class="sd">            musical_style (AnalysisMusicalStyle): The musical style reference for analysis.</span>
+<span class="sd">            is_master (bool, optional): Whether the tracks should be analyzed as</span>
+<span class="sd">                mastered tracks. Defaults to False.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dict[str, Any]: A dictionary containing &#39;mix_a&#39; results, &#39;mix_b&#39; results, </span>
+<span class="sd">                          and calculated &#39;differences&#39; between key metrics (loudness, etc.).</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            requests.exceptions.RequestException: If either underlying `analyze_mix` call fails</span>
+<span class="sd">                                                 due to network issues.</span>
+<span class="sd">            Exception: If either underlying `analyze_mix` call returns an API error,</span>
+<span class="sd">                       or if there&#39;s an issue during metric extraction/comparison.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; from roex_python.models import AnalysisMusicalStyle</span>
+<span class="sd">            &gt;&gt;&gt; # Assume &#39;client&#39; is an initialized RoExClient</span>
+<span class="sd">            &gt;&gt;&gt; # Assume &#39;track_url_a&#39;, &#39;track_url_b&#39; are URLs for two mixes</span>
+<span class="sd">            &gt;&gt;&gt; try:</span>
+<span class="sd">            &gt;&gt;&gt;     comparison = client.analysis.compare_mixes(</span>
+<span class="sd">            ...         mix_a_url=track_url_a,</span>
+<span class="sd">            ...         mix_b_url=track_url_b,</span>
+<span class="sd">            ...         musical_style=AnalysisMusicalStyle.POP,</span>
+<span class="sd">            ...         is_master=True</span>
+<span class="sd">            ...     )</span>
+<span class="sd">            &gt;&gt;&gt;     print(f&quot;Mix A LUFS: {comparison[&#39;mix_a&#39;].get(&#39;integrated_loudness_lufs&#39;)}&quot;)</span>
+<span class="sd">            &gt;&gt;&gt;     print(f&quot;Mix B LUFS: {comparison[&#39;mix_b&#39;].get(&#39;integrated_loudness_lufs&#39;)}&quot;)</span>
+<span class="sd">            &gt;&gt;&gt;     print(f&quot;LUFS Difference: {comparison[&#39;differences&#39;].get(&#39;integrated_loudness_lufs&#39;)}&quot;)</span>
+<span class="sd">            &gt;&gt;&gt;     # Explore other comparison metrics</span>
+<span class="sd">            &gt;&gt;&gt; except Exception as e:</span>
+<span class="sd">            &gt;&gt;&gt;     print(f&quot;Error comparing mixes: {e}&quot;)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Comparing mixes: </span><span class="si">{</span><span class="n">mix_a_url</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">mix_b_url</span><span class="si">}</span><span class="s2"> with musical style: </span><span class="si">{</span><span class="n">musical_style</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">request_a</span> <span class="o">=</span> <span class="n">MixAnalysisRequest</span><span class="p">(</span>
+            <span class="n">audio_file_location</span><span class="o">=</span><span class="n">mix_a_url</span><span class="p">,</span>
+            <span class="n">musical_style</span><span class="o">=</span><span class="n">musical_style</span><span class="p">,</span>
+            <span class="n">is_master</span><span class="o">=</span><span class="n">is_master</span>
+        <span class="p">)</span>
+
+        <span class="n">request_b</span> <span class="o">=</span> <span class="n">MixAnalysisRequest</span><span class="p">(</span>
+            <span class="n">audio_file_location</span><span class="o">=</span><span class="n">mix_b_url</span><span class="p">,</span>
+            <span class="n">musical_style</span><span class="o">=</span><span class="n">musical_style</span><span class="p">,</span>
+            <span class="n">is_master</span><span class="o">=</span><span class="n">is_master</span>
+        <span class="p">)</span>
+
+        <span class="n">results_a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">analyze_mix</span><span class="p">(</span><span class="n">request_a</span><span class="p">)</span>
+        <span class="n">results_b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">analyze_mix</span><span class="p">(</span><span class="n">request_b</span><span class="p">)</span>
+
+        <span class="c1"># Extract key metrics for comparison</span>
+        <span class="n">comparison</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;mix_a&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_metrics</span><span class="p">(</span><span class="n">results_a</span><span class="p">),</span>
+            <span class="s2">&quot;mix_b&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_metrics</span><span class="p">(</span><span class="n">results_b</span><span class="p">),</span>
+            <span class="s2">&quot;differences&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compare_metrics</span><span class="p">(</span><span class="n">results_a</span><span class="p">,</span> <span class="n">results_b</span><span class="p">)</span>
+        <span class="p">}</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Comparison results generated successfully.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">comparison</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_extract_metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">diagnosis</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extract key metrics from diagnosis results</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            diagnosis: Mix diagnosis results</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary of extracted metrics</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Extracting metrics from diagnosis results: </span><span class="si">{</span><span class="n">diagnosis</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">payload</span> <span class="o">=</span> <span class="n">diagnosis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;payload&quot;</span><span class="p">,</span> <span class="p">{})</span>
+
+        <span class="c1"># Extract production metrics</span>
+        <span class="n">production_keys</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s2">&quot;bit_depth&quot;</span><span class="p">,</span> <span class="s2">&quot;clipping&quot;</span><span class="p">,</span> <span class="s2">&quot;if_master_drc&quot;</span><span class="p">,</span> <span class="s2">&quot;if_master_loudness&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;if_mix_drc&quot;</span><span class="p">,</span> <span class="s2">&quot;if_mix_loudness&quot;</span><span class="p">,</span> <span class="s2">&quot;integrated_loudness_lufs&quot;</span><span class="p">,</span> <span class="s2">&quot;mix_style&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;mono_compatible&quot;</span><span class="p">,</span> <span class="s2">&quot;musical_style&quot;</span><span class="p">,</span> <span class="s2">&quot;peak_loudness_dbfs&quot;</span><span class="p">,</span> <span class="s2">&quot;phase_issues&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;sample_rate&quot;</span><span class="p">,</span> <span class="s2">&quot;stereo_field&quot;</span>
+        <span class="p">]</span>
+        <span class="n">metrics</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">payload</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="s2">&quot;N/A&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">production_keys</span><span class="p">}</span>
+
+        <span class="c1"># Add tonal profile</span>
+        <span class="n">metrics</span><span class="p">[</span><span class="s2">&quot;tonal_profile&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">payload</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tonal_profile&quot;</span><span class="p">,</span> <span class="p">{})</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Metrics extracted successfully.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">metrics</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compare_metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">results_a</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">results_b</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compare metrics between two analysis results</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            results_a: First mix diagnosis results</span>
+<span class="sd">            results_b: Second mix diagnosis results</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary of differences</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Comparing metrics between two analysis results.&quot;</span><span class="p">)</span>
+        <span class="n">metrics_a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_metrics</span><span class="p">(</span><span class="n">results_a</span><span class="p">)</span>
+        <span class="n">metrics_b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_metrics</span><span class="p">(</span><span class="n">results_b</span><span class="p">)</span>
+
+        <span class="n">differences</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># Compare numeric values</span>
+        <span class="n">numeric_keys</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;integrated_loudness_lufs&quot;</span><span class="p">,</span> <span class="s2">&quot;peak_loudness_dbfs&quot;</span><span class="p">,</span> <span class="s2">&quot;bit_depth&quot;</span><span class="p">,</span> <span class="s2">&quot;sample_rate&quot;</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">numeric_keys</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">val_a</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">metrics_a</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+                <span class="n">val_b</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">metrics_b</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+                <span class="n">differences</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s2">&quot;difference&quot;</span><span class="p">:</span> <span class="nb">abs</span><span class="p">(</span><span class="n">val_a</span> <span class="o">-</span> <span class="n">val_b</span><span class="p">),</span>
+                    <span class="s2">&quot;mix_a_value&quot;</span><span class="p">:</span> <span class="n">val_a</span><span class="p">,</span>
+                    <span class="s2">&quot;mix_b_value&quot;</span><span class="p">:</span> <span class="n">val_b</span>
+                <span class="p">}</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+                <span class="n">differences</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;N/A&quot;</span>
+
+        <span class="c1"># Compare categorical values</span>
+        <span class="n">categorical_keys</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;clipping&quot;</span><span class="p">,</span> <span class="s2">&quot;if_master_drc&quot;</span><span class="p">,</span> <span class="s2">&quot;if_master_loudness&quot;</span><span class="p">,</span> <span class="s2">&quot;stereo_field&quot;</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">categorical_keys</span><span class="p">:</span>
+            <span class="n">val_a</span> <span class="o">=</span> <span class="n">metrics_a</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">val_b</span> <span class="o">=</span> <span class="n">metrics_b</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">differences</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;SAME&quot;</span> <span class="k">if</span> <span class="n">val_a</span> <span class="o">==</span> <span class="n">val_b</span> <span class="k">else</span> <span class="s2">&quot;DIFFERENT&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;mix_a_value&quot;</span><span class="p">:</span> <span class="n">val_a</span><span class="p">,</span>
+                <span class="s2">&quot;mix_b_value&quot;</span><span class="p">:</span> <span class="n">val_b</span>
+            <span class="p">}</span>
+
+        <span class="c1"># Compare tonal profiles</span>
+        <span class="n">tonal_a</span> <span class="o">=</span> <span class="n">metrics_a</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tonal_profile&quot;</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="n">tonal_b</span> <span class="o">=</span> <span class="n">metrics_b</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tonal_profile&quot;</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="n">tonal_diff</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">freq</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;bass_frequency&quot;</span><span class="p">,</span> <span class="s2">&quot;low_mid_frequency&quot;</span><span class="p">,</span> <span class="s2">&quot;high_mid_frequency&quot;</span><span class="p">,</span> <span class="s2">&quot;high_frequency&quot;</span><span class="p">]:</span>
+            <span class="n">val_a</span> <span class="o">=</span> <span class="n">tonal_a</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">freq</span><span class="p">)</span>
+            <span class="n">val_b</span> <span class="o">=</span> <span class="n">tonal_b</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">freq</span><span class="p">)</span>
+            <span class="n">tonal_diff</span><span class="p">[</span><span class="n">freq</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;SAME&quot;</span> <span class="k">if</span> <span class="n">val_a</span> <span class="o">==</span> <span class="n">val_b</span> <span class="k">else</span> <span class="s2">&quot;DIFFERENT&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;mix_a_value&quot;</span><span class="p">:</span> <span class="n">val_a</span><span class="p">,</span>
+                <span class="s2">&quot;mix_b_value&quot;</span><span class="p">:</span> <span class="n">val_b</span>
+            <span class="p">}</span>
+
+        <span class="n">differences</span><span class="p">[</span><span class="s2">&quot;tonal_profile&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tonal_diff</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Metrics comparison completed successfully.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">differences</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, RoEx LTD.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

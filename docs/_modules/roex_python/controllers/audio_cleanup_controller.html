@@ -1,0 +1,228 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>roex_python.controllers.audio_cleanup_controller &mdash; roex-python 1.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=61243dd2"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            roex-python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">roex-python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">roex_python.controllers.audio_cleanup_controller</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for roex_python.controllers.audio_cleanup_controller</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..models.audio_cleanup</span><span class="w"> </span><span class="kn">import</span> <span class="n">AudioCleanupData</span><span class="p">,</span> <span class="n">AudioCleanupResponse</span><span class="p">,</span> <span class="n">AudioCleanupResults</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..providers.api_provider</span><span class="w"> </span><span class="kn">import</span> <span class="n">ApiProvider</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+
+<span class="c1"># Initialize logger for this module</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<div class="viewcode-block" id="AudioCleanupController">
+<a class="viewcode-back" href="../../../api.html#roex_python.controllers.audio_cleanup_controller.AudioCleanupController">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AudioCleanupController</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Controller for submitting audio tracks for noise reduction and cleanup via the RoEx API.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">api_provider</span><span class="p">:</span> <span class="n">ApiProvider</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the AudioCleanupController.</span>
+
+<span class="sd">        Typically, this controller is accessed via `client.audio_cleanup` rather than</span>
+<span class="sd">        instantiated directly.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            api_provider (ApiProvider): An instance of ApiProvider configured with</span>
+<span class="sd">                the base URL and API key.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">api_provider</span> <span class="o">=</span> <span class="n">api_provider</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;AudioCleanupController initialized.&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="AudioCleanupController.clean_up_audio">
+<a class="viewcode-back" href="../../../api.html#roex_python.controllers.audio_cleanup_controller.AudioCleanupController.clean_up_audio">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clean_up_audio</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">audio_cleanup_data</span><span class="p">:</span> <span class="n">AudioCleanupData</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AudioCleanupResponse</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Submit an audio track for cleanup based on the specified sound source.</span>
+
+<span class="sd">        This method sends the audio track URL and the type of instrument/sound</span>
+<span class="sd">        to the RoEx API `/audio-cleanup` endpoint for processing. The API attempts</span>
+<span class="sd">        to reduce noise and artifacts specific to that source.</span>
+<span class="sd">        The operation is synchronous and returns the results directly.</span>
+
+<span class="sd">        Supported Sound Sources (SoundSource Enum):</span>
+<span class="sd">            KICK_GROUP, SNARE_GROUP, VOCAL_GROUP, BACKING_VOCALS_GROUP,</span>
+<span class="sd">            PERCS_GROUP, STRINGS_GROUP, E_GUITAR_GROUP, ACOUSTIC_GUITAR_GROUP</span>
+
+<span class="sd">        Supported File Formats: WAV, FLAC</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            audio_cleanup_data (AudioCleanupData): An object containing:</span>
+<span class="sd">                - `audio_file_location` (str): URL of the audio file (WAV or FLAC).</span>
+<span class="sd">                - `sound_source` (SoundSource): The type of instrument/sound in the track.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Optional[AudioCleanupResponse]: An object containing the results:</span>
+<span class="sd">                - `error` (bool): Indicates if the overall API call had an error.</span>
+<span class="sd">                - `message` (str): A status message from the API.</span>
+<span class="sd">                - `info` (str): Additional information from the API.</span>
+<span class="sd">                - `audio_cleanup_results` (Optional[AudioCleanupResults]): Detailed results including:</span>
+<span class="sd">                    - `completion_time` (str): Timestamp of completion.</span>
+<span class="sd">                    - `error` (bool): Indicates if the cleanup *process* failed.</span>
+<span class="sd">                    - `info` (str): Information specific to the cleanup process.</span>
+<span class="sd">                    - `cleaned_audio_file_location` (Optional[str]): URL to the cleaned audio file.</span>
+
+<span class="sd">                Returns `None` if an exception occurs during the API call.</span>
+<span class="sd">                (Note: Consider adapting error handling for more specific feedback).</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            requests.exceptions.RequestException: If the API request fails due to network</span>
+<span class="sd">                                                 issues or invalid endpoint.</span>
+<span class="sd">            Exception: If the API returns an unexpected error or fails to process the request.</span>
+<span class="sd">                       (Currently caught and logged, returning None).</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; from roex_python.models import AudioCleanupData, SoundSource</span>
+<span class="sd">            &gt;&gt;&gt; # Assume &#39;client&#39; is an initialized RoExClient</span>
+<span class="sd">            &gt;&gt;&gt; # Assume &#39;vocal_track_url&#39; is a URL for a WAV/FLAC vocal track</span>
+<span class="sd">            &gt;&gt;&gt; cleanup_request = AudioCleanupData(</span>
+<span class="sd">            ...     audio_file_location=vocal_track_url,</span>
+<span class="sd">            ...     sound_source=SoundSource.VOCAL_GROUP</span>
+<span class="sd">            ... )</span>
+<span class="sd">            &gt;&gt;&gt; try:</span>
+<span class="sd">            &gt;&gt;&gt;     cleanup_response = client.audio_cleanup.clean_up_audio(cleanup_request)</span>
+<span class="sd">            &gt;&gt;&gt;     if cleanup_response and not cleanup_response.error:</span>
+<span class="sd">            &gt;&gt;&gt;         results = cleanup_response.audio_cleanup_results</span>
+<span class="sd">            &gt;&gt;&gt;         if results and not results.error:</span>
+<span class="sd">            &gt;&gt;&gt;             print(f&quot;Cleanup successful! Cleaned file at: {results.cleaned_audio_file_location}&quot;)</span>
+<span class="sd">            &gt;&gt;&gt;         else:</span>
+<span class="sd">            &gt;&gt;&gt;             print(f&quot;Cleanup process failed: {results.info if results else &#39;N/A&#39;}&quot;)</span>
+<span class="sd">            &gt;&gt;&gt;     else:</span>
+<span class="sd">            &gt;&gt;&gt;         print(f&quot;API call failed: {cleanup_response.message if cleanup_response else &#39;Exception occurred&#39;}&quot;)</span>
+<span class="sd">            &gt;&gt;&gt; except Exception as e:</span>
+<span class="sd">            &gt;&gt;&gt;     # This part might not be reached due to current internal handling</span>
+<span class="sd">            &gt;&gt;&gt;     print(f&quot;An unexpected error occurred: {e}&quot;)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Starting audio cleanup operation.&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Audio cleanup request data: </span><span class="si">{</span><span class="n">audio_cleanup_data</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;audioCleanupData&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;audioFileLocation&quot;</span><span class="p">:</span> <span class="n">audio_cleanup_data</span><span class="o">.</span><span class="n">audio_file_location</span><span class="p">,</span>
+                <span class="s2">&quot;soundSource&quot;</span><span class="p">:</span> <span class="n">audio_cleanup_data</span><span class="o">.</span><span class="n">sound_source</span><span class="o">.</span><span class="n">value</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">api_provider</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/audio-cleanup&quot;</span><span class="p">,</span> <span class="n">payload</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Received response from API.&quot;</span><span class="p">)</span>
+            <span class="n">results</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="s2">&quot;audioCleanupResults&quot;</span> <span class="ow">in</span> <span class="n">response</span><span class="p">:</span>
+                <span class="n">results_data</span> <span class="o">=</span> <span class="n">response</span><span class="p">[</span><span class="s2">&quot;audioCleanupResults&quot;</span><span class="p">]</span>
+                <span class="n">results</span> <span class="o">=</span> <span class="n">AudioCleanupResults</span><span class="p">(</span>
+                    <span class="n">completion_time</span><span class="o">=</span><span class="n">results_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;completion_time&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
+                    <span class="n">error</span><span class="o">=</span><span class="n">results_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;error&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+                    <span class="n">info</span><span class="o">=</span><span class="n">results_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;info&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
+                    <span class="n">cleaned_audio_file_location</span><span class="o">=</span><span class="n">results_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;cleaned_audio_file_location&quot;</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Audio cleanup results retrieved successfully.&quot;</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">AudioCleanupResponse</span><span class="p">(</span>
+                <span class="n">error</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;error&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+                <span class="n">message</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;message&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
+                <span class="n">info</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;info&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
+                <span class="n">audio_cleanup_results</span><span class="o">=</span><span class="n">results</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Exception during audio cleanup operation: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="c1"># Current implementation returns None on exception.</span>
+            <span class="c1"># Consider re-raising or returning a more informative error response.</span>
+            <span class="k">return</span> <span class="kc">None</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, RoEx LTD.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

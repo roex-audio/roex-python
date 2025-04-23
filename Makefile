@@ -6,7 +6,7 @@
 SPHINXOPTS    ?=
 SPHINXBUILD   ?= sphinx-build
 SOURCEDIR     = .
-BUILDDIR      = _build
+BUILDDIR      = docs
 
 # Put it first so that "make" without argument is like "make help".
 help:
@@ -17,4 +17,16 @@ help:
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
 %: Makefile
-	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+	@echo "Building $@..."
+	@$(SPHINXBUILD) -b $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+
+# Special handling for 'html' target to avoid subdirectory
+.PHONY: html
+html: Makefile
+	@echo "Building html directly into $(BUILDDIR)..."
+	@$(SPHINXBUILD) -b html "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+
+.PHONY: clean
+clean:
+	@echo "Cleaning $(BUILDDIR)..."
+	@rm -rf "$(BUILDDIR)"/*

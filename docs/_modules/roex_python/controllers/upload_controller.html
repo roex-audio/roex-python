@@ -1,0 +1,223 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>roex_python.controllers.upload_controller &mdash; roex-python 1.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=61243dd2"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            roex-python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">roex-python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">roex_python.controllers.upload_controller</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for roex_python.controllers.upload_controller</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Controller for file upload operations</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..models.upload</span><span class="w"> </span><span class="kn">import</span> <span class="n">UploadUrlRequest</span><span class="p">,</span> <span class="n">UploadUrlResponse</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..providers.api_provider</span><span class="w"> </span><span class="kn">import</span> <span class="n">ApiProvider</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+
+<span class="c1"># Initialize logger for this module</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<div class="viewcode-block" id="UploadController">
+<a class="viewcode-back" href="../../../api.html#roex_python.controllers.upload_controller.UploadController">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">UploadController</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Controller for obtaining pre-signed URLs to upload local files for use with the RoEx API.</span>
+
+<span class="sd">    The RoEx API operates on files accessible via URLs. To use a local file, you must first</span>
+<span class="sd">    obtain a pre-signed upload URL using this controller, upload the file to that URL,</span>
+<span class="sd">    and then use the corresponding `readable_url` in subsequent API requests (e.g., for</span>
+<span class="sd">    mixing, mastering, analysis).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">api_provider</span><span class="p">:</span> <span class="n">ApiProvider</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the UploadController.</span>
+
+<span class="sd">        Typically, this controller is accessed via `client.upload` rather than</span>
+<span class="sd">        instantiated directly.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            api_provider (ApiProvider): An instance of ApiProvider configured with</span>
+<span class="sd">                the base URL and API key.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">api_provider</span> <span class="o">=</span> <span class="n">api_provider</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;UploadController initialized.&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="UploadController.get_upload_url">
+<a class="viewcode-back" href="../../../api.html#roex_python.controllers.upload_controller.UploadController.get_upload_url">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_upload_url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">:</span> <span class="n">UploadUrlRequest</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">UploadUrlResponse</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get a pre-signed URL for uploading a local file and a readable URL for API use.</span>
+
+<span class="sd">        Calls the RoEx API&#39;s `/upload` endpoint to generate two URLs:</span>
+<span class="sd">        </span>
+<span class="sd">        1. ``signed_url``: A temporary URL to which you can upload your local file</span>
+<span class="sd">           using an HTTP PUT request. This URL has write permissions.</span>
+<span class="sd">        2. ``readable_url``: The permanent URL that represents the file once uploaded.</span>
+<span class="sd">           Use this URL in other RoEx API calls (e.g., mastering, mixing) that require</span>
+<span class="sd">           a file location.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            request (UploadUrlRequest): An object containing:</span>
+<span class="sd">                - ``filename`` (str): The desired filename for the uploaded file (e.g., &quot;my_track.wav&quot;).</span>
+<span class="sd">                - ``content_type`` (str): The MIME type of the file (e.g., &quot;audio/wav&quot;, &quot;audio/flac&quot;).</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            UploadUrlResponse: An object containing `signed_url` and `readable_url`.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            requests.exceptions.RequestException: If the API request to `/upload` fails due to</span>
+<span class="sd">                                                 network issues or invalid endpoint.</span>
+<span class="sd">            Exception: If the API returns an error response (e.g., 4xx, 5xx status codes).</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; import requests</span>
+<span class="sd">            &gt;&gt;&gt; from roex_python.models import UploadUrlRequest</span>
+<span class="sd">            &gt;&gt;&gt; # Assume &#39;client&#39; is an initialized RoExClient</span>
+<span class="sd">            &gt;&gt;&gt; local_file_path = &quot;path/to/your/audio.wav&quot;</span>
+<span class="sd">            &gt;&gt;&gt; file_name = &quot;uploaded_track.wav&quot;</span>
+<span class="sd">            &gt;&gt;&gt; content_type = &quot;audio/wav&quot;</span>
+<span class="sd">            &gt;&gt;&gt;</span>
+<span class="sd">            &gt;&gt;&gt; upload_req = UploadUrlRequest(filename=file_name, content_type=content_type)</span>
+<span class="sd">            &gt;&gt;&gt;</span>
+<span class="sd">            &gt;&gt;&gt; try:</span>
+<span class="sd">            &gt;&gt;&gt;     # 1. Get the URLs</span>
+<span class="sd">            &gt;&gt;&gt;     url_response = client.upload.get_upload_url(upload_req)</span>
+<span class="sd">            &gt;&gt;&gt;     if url_response.error or not url_response.signed_url or not url_response.readable_url:</span>
+<span class="sd">            &gt;&gt;&gt;         print(f&quot;Error getting upload URL: {url_response.message}&quot;)</span>
+<span class="sd">            &gt;&gt;&gt;     else:</span>
+<span class="sd">            &gt;&gt;&gt;         signed_url = url_response.signed_url</span>
+<span class="sd">            &gt;&gt;&gt;         readable_url = url_response.readable_url</span>
+<span class="sd">            &gt;&gt;&gt;         print(f&quot;Got signed URL: {signed_url[:50]}...&quot;) # Truncated for display</span>
+<span class="sd">            &gt;&gt;&gt;         print(f&quot;Got readable URL: {readable_url}&quot;)</span>
+<span class="sd">            &gt;&gt;&gt;</span>
+<span class="sd">            &gt;&gt;&gt;         # 2. Upload the local file using the signed URL</span>
+<span class="sd">            &gt;&gt;&gt;         with open(local_file_path, &#39;rb&#39;) as f:</span>
+<span class="sd">            &gt;&gt;&gt;             upload_put_response = requests.put(signed_url, data=f, headers={&#39;Content-Type&#39;: content_type})</span>
+<span class="sd">            &gt;&gt;&gt;</span>
+<span class="sd">            &gt;&gt;&gt;         if upload_put_response.status_code == 200:</span>
+<span class="sd">            &gt;&gt;&gt;             print(&quot;File uploaded successfully!&quot;)</span>
+<span class="sd">            &gt;&gt;&gt;             # 3. Now use &#39;readable_url&#39; in other client calls, e.g.:</span>
+<span class="sd">            &gt;&gt;&gt;             # mastering_request = MasteringRequest(track_url=readable_url, ...)</span>
+<span class="sd">            &gt;&gt;&gt;             # client.mastering.create_mastering_preview(mastering_request)</span>
+<span class="sd">            &gt;&gt;&gt;         else:</span>
+<span class="sd">            &gt;&gt;&gt;             print(f&quot;File upload failed: {upload_put_response.status_code} - {upload_put_response.text}&quot;)</span>
+<span class="sd">            &gt;&gt;&gt;</span>
+<span class="sd">            &gt;&gt;&gt; except Exception as e:</span>
+<span class="sd">            &gt;&gt;&gt;     print(f&quot;An error occurred: {e}&quot;)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Requesting upload URL&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Upload URL request data: </span><span class="si">{</span><span class="n">request</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;filename&quot;</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">filename</span><span class="p">,</span>
+            <span class="s2">&quot;contentType&quot;</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">content_type</span>
+        <span class="p">}</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">api_provider</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/upload&quot;</span><span class="p">,</span> <span class="n">payload</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Upload URL request successful&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">UploadUrlResponse</span><span class="p">(</span>
+                <span class="n">signed_url</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;signed_url&quot;</span><span class="p">),</span>
+                <span class="n">readable_url</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;readable_url&quot;</span><span class="p">),</span>
+                <span class="n">error</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;error&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+                <span class="n">message</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;message&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
+                <span class="n">info</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;info&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Exception during upload URL creation: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, RoEx LTD.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
