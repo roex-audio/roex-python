@@ -16,6 +16,7 @@ keywords = ["audio", "mixing", "mastering", "enhancement", "api"]
 [tool.poetry.dependencies]
 python = ">=3.7,<4.0"
 requests = "^2.25.0"
+soundfile = ">=0.10.0"  # Added dependency for audio file handling in examples
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.5"

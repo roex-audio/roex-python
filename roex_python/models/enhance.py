@@ -54,6 +54,7 @@ class MixEnhanceRequest:
     webhook_url: Optional[str] = None
     loudness_preference: LoudnessPreference = LoudnessPreference.STREAMING_LOUDNESS
     stem_processing: bool = False
+    """bool: If True, requests the generation of stems (e.g., vocals, bass, drums, other) alongside the enhanced mix. Defaults to False."""
 
 
 @dataclass
