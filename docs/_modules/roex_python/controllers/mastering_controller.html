@@ -1,0 +1,435 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>roex_python.controllers.mastering_controller &mdash; roex-python 1.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=61243dd2"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            roex-python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">roex-python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">roex_python.controllers.mastering_controller</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for roex_python.controllers.mastering_controller</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Controller for mastering operations</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">List</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">roex_python.models.mastering</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">MasteringRequest</span><span class="p">,</span>
+    <span class="n">MasteringTaskResponse</span><span class="p">,</span>
+    <span class="n">AlbumMasteringRequest</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">roex_python.providers.api_provider</span><span class="w"> </span><span class="kn">import</span> <span class="n">ApiProvider</span>
+
+<span class="c1"># Initialize logger for this module</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<div class="viewcode-block" id="MasteringController">
+<a class="viewcode-back" href="../../../api.html#roex_python.controllers.mastering_controller.MasteringController">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MasteringController</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Controller for managing audio mastering operations via the RoEx API.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">api_provider</span><span class="p">:</span> <span class="n">ApiProvider</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the MasteringController.</span>
+
+<span class="sd">        Typically, this controller is accessed via `client.mastering` rather than</span>
+<span class="sd">        instantiated directly.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            api_provider (ApiProvider): An instance of ApiProvider configured with</span>
+<span class="sd">                the base URL and API key.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">api_provider</span> <span class="o">=</span> <span class="n">api_provider</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;MasteringController initialized.&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="MasteringController.create_mastering_preview">
+<a class="viewcode-back" href="../../../api.html#roex_python.controllers.mastering_controller.MasteringController.create_mastering_preview">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_mastering_preview</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">:</span> <span class="n">MasteringRequest</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MasteringTaskResponse</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initiate an audio mastering preview task.</span>
+
+<span class="sd">        Sends the track URL and mastering parameters (style, loudness, etc.)</span>
+<span class="sd">        to the RoEx API to start an asynchronous mastering process. Returns</span>
+<span class="sd">        immediately with a task ID for polling results.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            request (MasteringRequest): An object containing the track URL and</span>
+<span class="sd">                mastering parameters (MusicalStyle, DesiredLoudness, etc.).</span>
+<span class="sd">                The track URL must point to an accessible WAV or FLAC file.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            MasteringTaskResponse: An object containing the unique `mastering_task_id`</span>
+<span class="sd">                for the initiated preview task.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            requests.exceptions.RequestException: If the API request fails due to network</span>
+<span class="sd">                                                 issues or invalid endpoint.</span>
+<span class="sd">            Exception: If the API returns an error response (e.g., 4xx, 5xx status codes)</span>
+<span class="sd">                       indicating issues like invalid input, authentication failure, or</span>
+<span class="sd">                       server errors.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; from roex_python.models import MasteringRequest, MusicalStyle, DesiredLoudness</span>
+<span class="sd">            &gt;&gt;&gt; # Assume &#39;client&#39; is an initialized RoExClient</span>
+<span class="sd">            &gt;&gt;&gt; # Assume &#39;track_url&#39; is a URL obtained after uploading a local file</span>
+<span class="sd">            &gt;&gt;&gt; master_request = MasteringRequest(</span>
+<span class="sd">            ...     track_url=track_url,</span>
+<span class="sd">            ...     musical_style=MusicalStyle.ELECTRONIC_EDM,</span>
+<span class="sd">            ...     desired_loudness=DesiredLoudness.HIGH,</span>
+<span class="sd">            ...     sample_rate=&quot;48000&quot;</span>
+<span class="sd">            ... )</span>
+<span class="sd">            &gt;&gt;&gt; try:</span>
+<span class="sd">            &gt;&gt;&gt;     task_response = client.mastering.create_mastering_preview(master_request)</span>
+<span class="sd">            &gt;&gt;&gt;     print(f&quot;Mastering preview task started: {task_response.mastering_task_id}&quot;)</span>
+<span class="sd">            &gt;&gt;&gt;     # Proceed to poll using retrieve_preview_master with this task_id</span>
+<span class="sd">            &gt;&gt;&gt; except Exception as e:</span>
+<span class="sd">            &gt;&gt;&gt;     print(f&quot;Error starting mastering preview: {e}&quot;)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Creating mastering preview&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Mastering preview request data: </span><span class="si">{</span><span class="n">request</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;masteringData&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;trackData&quot;</span><span class="p">:</span> <span class="p">[</span>
+                    <span class="p">{</span>
+                        <span class="s2">&quot;trackURL&quot;</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">track_url</span>
+                    <span class="p">}</span>
+                <span class="p">],</span>
+                <span class="s2">&quot;musicalStyle&quot;</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">musical_style</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="s2">&quot;desiredLoudness&quot;</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">desired_loudness</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="s2">&quot;sampleRate&quot;</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">sample_rate</span><span class="p">,</span>
+                <span class="s2">&quot;webhookURL&quot;</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">webhook_url</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">api_provider</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/masteringpreview&quot;</span><span class="p">,</span> <span class="n">payload</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Mastering preview task created successfully. Task ID: </span><span class="si">{</span><span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;mastering_task_id&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">MasteringTaskResponse</span><span class="p">(</span>
+                <span class="n">mastering_task_id</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;mastering_task_id&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">HTTPError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;HTTP error creating mastering preview task: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to create mastering preview: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unexpected error creating mastering preview task: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span></div>
+
+
+<div class="viewcode-block" id="MasteringController.retrieve_preview_master">
+<a class="viewcode-back" href="../../../api.html#roex_python.controllers.mastering_controller.MasteringController.retrieve_preview_master">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">retrieve_preview_master</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">max_attempts</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">30</span><span class="p">,</span>
+                                <span class="n">poll_interval</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Retrieve the results of a mastering preview task, polling until complete.</span>
+
+<span class="sd">        Checks the status of a mastering task initiated by `create_mastering_preview`.</span>
+<span class="sd">        Polls the API periodically until the task completes or the maximum number</span>
+<span class="sd">        of attempts is reached.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            task_id (str): The `mastering_task_id` obtained from the</span>
+<span class="sd">                `create_mastering_preview` response.</span>
+<span class="sd">            max_attempts (int, optional): Maximum number of polling attempts before</span>
+<span class="sd">                timing out. Defaults to 30.</span>
+<span class="sd">            poll_interval (int, optional): Seconds to wait between polling attempts.</span>
+<span class="sd">                Defaults to 5.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dict[str, Any]: A dictionary containing the results of the preview master.</span>
+<span class="sd">                Key fields typically include:</span>
+<span class="sd">                - &#39;status&#39;: Final status (e.g., &#39;MASTERING_TASK_PREVIEW_COMPLETED&#39;).</span>
+<span class="sd">                - &#39;download_url_mastered_preview&#39;: URL to download the preview audio.</span>
+<span class="sd">                Check the official RoEx API documentation for the exact structure.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            requests.exceptions.RequestException: If an API request fails during polling.</span>
+<span class="sd">            Exception: If the task does not complete successfully within `max_attempts`,</span>
+<span class="sd">                       if the API returns an error during polling, or for other</span>
+<span class="sd">                       API errors (4xx/5xx).</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; # Assume &#39;client&#39; is an initialized RoExClient</span>
+<span class="sd">            &gt;&gt;&gt; # Assume &#39;task_id&#39; was obtained from create_mastering_preview</span>
+<span class="sd">            &gt;&gt;&gt; try:</span>
+<span class="sd">            &gt;&gt;&gt;     master_results = client.mastering.retrieve_preview_master(task_id)</span>
+<span class="sd">            &gt;&gt;&gt;     print(f&quot;Mastering Preview Status: {master_results.get(&#39;status&#39;)}&quot;)</span>
+<span class="sd">            &gt;&gt;&gt;     print(f&quot;Preview Download URL: {master_results.get(&#39;download_url_mastered_preview&#39;)}&quot;)</span>
+<span class="sd">            &gt;&gt;&gt;     # Further process the results (e.g., download the file)</span>
+<span class="sd">            &gt;&gt;&gt; except Exception as e:</span>
+<span class="sd">            &gt;&gt;&gt;     print(f&quot;Error retrieving mastering preview: {e}&quot;)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Retrieving preview master for task ID: </span><span class="si">{</span><span class="n">task_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;masteringData&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;masteringTaskId&quot;</span><span class="p">:</span> <span class="n">task_id</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Try initial request</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">api_provider</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/retrievepreviewmaster&quot;</span><span class="p">,</span> <span class="n">payload</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s2">&quot;previewMasterTaskResults&quot;</span> <span class="ow">in</span> <span class="n">response</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Preview master ready for task ID: </span><span class="si">{</span><span class="n">task_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">response</span><span class="p">[</span><span class="s2">&quot;previewMasterTaskResults&quot;</span><span class="p">]</span>
+        <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">HTTPError</span><span class="p">:</span>
+            <span class="c1"># Initial request failed, let&#39;s try polling</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Initial request failed for task ID: </span><span class="si">{</span><span class="n">task_id</span><span class="si">}</span><span class="s2">. Starting polling...&quot;</span><span class="p">)</span>
+            <span class="k">pass</span>
+
+        <span class="c1"># Poll for results</span>
+        <span class="k">for</span> <span class="n">attempt</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_attempts</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Polling attempt </span><span class="si">{</span><span class="n">attempt</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">max_attempts</span><span class="si">}</span><span class="s2"> for task ID: </span><span class="si">{</span><span class="n">task_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">api_provider</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/retrievepreviewmaster&quot;</span><span class="p">,</span> <span class="n">payload</span><span class="p">)</span>
+
+                <span class="c1"># If we get a 200 response with results</span>
+                <span class="k">if</span> <span class="s2">&quot;previewMasterTaskResults&quot;</span> <span class="ow">in</span> <span class="n">response</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Preview master ready for task ID: </span><span class="si">{</span><span class="n">task_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="n">response</span><span class="p">[</span><span class="s2">&quot;previewMasterTaskResults&quot;</span><span class="p">]</span>
+
+                <span class="c1"># Check for specific status codes</span>
+                <span class="n">status_code</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;status&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">status_code</span> <span class="o">==</span> <span class="mi">202</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Task still processing for task ID: </span><span class="si">{</span><span class="n">task_id</span><span class="si">}</span><span class="s2">...&quot;</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span><span class="p">:</span>
+                    <span class="c1"># If we get a 200 but no results, try to parse the response differently</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">&quot;download_url_mastered_preview&quot;</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
+                                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Preview master ready for task ID: </span><span class="si">{</span><span class="n">task_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                                <span class="k">return</span> <span class="n">value</span>
+            <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">HTTPError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error during polling for task ID: </span><span class="si">{</span><span class="n">task_id</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unexpected error during polling for task ID: </span><span class="si">{</span><span class="n">task_id</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="c1"># Wait before next attempt</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">poll_interval</span><span class="p">)</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Timeout waiting for preview master for task ID: </span><span class="si">{</span><span class="n">task_id</span><span class="si">}</span><span class="s2"> after </span><span class="si">{</span><span class="n">max_attempts</span><span class="si">}</span><span class="s2"> attempts.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Preview master task </span><span class="si">{</span><span class="n">task_id</span><span class="si">}</span><span class="s2"> did not complete after polling for </span><span class="si">{</span><span class="n">max_attempts</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">poll_interval</span><span class="si">}</span><span class="s2"> seconds.&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MasteringController.retrieve_final_master">
+<a class="viewcode-back" href="../../../api.html#roex_python.controllers.mastering_controller.MasteringController.retrieve_final_master">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">retrieve_final_master</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Retrieve the final mastered audio file.</span>
+
+<span class="sd">        This method fetches the final output of a completed mastering task.</span>
+<span class="sd">        It&#39;s typically called after `create_mastering_preview` and potentially</span>
+<span class="sd">        `retrieve_preview_master` confirm the task is done, although polling</span>
+<span class="sd">        is not built into this specific retrieval method.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            task_id (str): The `mastering_task_id` obtained from the</span>
+<span class="sd">                `create_mastering_preview` response.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dict[str, Any]: A dictionary containing the results of the final master.</span>
+<span class="sd">                Key fields typically include:</span>
+<span class="sd">                - &#39;status&#39;: Final status (e.g., &#39;MASTERING_TASK_FINAL_COMPLETED&#39;).</span>
+<span class="sd">                - &#39;download_url_mastered_final&#39;: URL to download the final audio.</span>
+<span class="sd">                Check the official RoEx API documentation for the exact structure.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            requests.exceptions.RequestException: If the API request fails.</span>
+<span class="sd">            Exception: If the API returns an error response (e.g., 4xx, 5xx status codes),</span>
+<span class="sd">                       indicating issues like task not found, task not complete, or server errors.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; # Assume &#39;client&#39; is an initialized RoExClient</span>
+<span class="sd">            &gt;&gt;&gt; # Assume &#39;task_id&#39; was obtained from create_mastering_preview and preview is complete</span>
+<span class="sd">            &gt;&gt;&gt; try:</span>
+<span class="sd">            &gt;&gt;&gt;     final_master_results = client.mastering.retrieve_final_master(task_id)</span>
+<span class="sd">            &gt;&gt;&gt;     print(f&quot;Final Master Status: {final_master_results.get(&#39;status&#39;)}&quot;)</span>
+<span class="sd">            &gt;&gt;&gt;     print(f&quot;Final Download URL: {final_master_results.get(&#39;download_url_mastered_final&#39;)}&quot;)</span>
+<span class="sd">            &gt;&gt;&gt;     # Further process the results</span>
+<span class="sd">            &gt;&gt;&gt; except Exception as e:</span>
+<span class="sd">            &gt;&gt;&gt;     print(f&quot;Error retrieving final master: {e}&quot;)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Retrieving final master for task ID: </span><span class="si">{</span><span class="n">task_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;masteringData&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;masteringTaskId&quot;</span><span class="p">:</span> <span class="n">task_id</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">api_provider</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/retrievefinalmaster&quot;</span><span class="p">,</span> <span class="n">payload</span><span class="p">)</span>
+
+            <span class="c1"># Handle different response formats</span>
+            <span class="k">if</span> <span class="s2">&quot;finalMasterTaskResults&quot;</span> <span class="ow">in</span> <span class="n">response</span><span class="p">:</span>
+                <span class="c1"># If it&#39;s a structured response</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Final master ready for task ID: </span><span class="si">{</span><span class="n">task_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">response</span><span class="p">[</span><span class="s2">&quot;finalMasterTaskResults&quot;</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">&quot;download_url_mastered&quot;</span> <span class="ow">in</span> <span class="n">response</span><span class="p">:</span>
+                <span class="c1"># If the URL is directly in the response</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Final master ready for task ID: </span><span class="si">{</span><span class="n">task_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">response</span><span class="p">[</span><span class="s2">&quot;download_url_mastered&quot;</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;http://&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">response</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;https://&quot;</span><span class="p">)):</span>
+                <span class="c1"># If the response is just the URL as a string</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Final master ready for task ID: </span><span class="si">{</span><span class="n">task_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">response</span>
+
+            <span class="c1"># Default fallback</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown response format for task ID: </span><span class="si">{</span><span class="n">task_id</span><span class="si">}</span><span class="s2">. Returning raw response.&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">response</span>
+        <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">HTTPError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;HTTP error retrieving final master for task ID: </span><span class="si">{</span><span class="n">task_id</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to retrieve final master: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unexpected error retrieving final master for task ID: </span><span class="si">{</span><span class="n">task_id</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span></div>
+
+
+<div class="viewcode-block" id="MasteringController.process_album">
+<a class="viewcode-back" href="../../../api.html#roex_python.controllers.mastering_controller.MasteringController.process_album">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">process_album</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">album_request</span><span class="p">:</span> <span class="n">AlbumMasteringRequest</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;final_masters&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Process multiple tracks as an album</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            album_request: Album mastering request containing multiple tracks</span>
+<span class="sd">            output_dir: Directory to save downloaded masters</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary mapping track index to download URL</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            Exception: If any track processing fails</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processing album with </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">album_request</span><span class="o">.</span><span class="n">tracks</span><span class="p">)</span><span class="si">}</span><span class="s2"> tracks&quot;</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">results</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">track_request</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">album_request</span><span class="o">.</span><span class="n">tracks</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Starting mastering for Track #</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="c1"># Create preview</span>
+            <span class="n">preview_response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_mastering_preview</span><span class="p">(</span><span class="n">track_request</span><span class="p">)</span>
+            <span class="n">task_id</span> <span class="o">=</span> <span class="n">preview_response</span><span class="o">.</span><span class="n">mastering_task_id</span>
+
+            <span class="c1"># Wait for preview to complete</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">preview_results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">retrieve_preview_master</span><span class="p">(</span><span class="n">task_id</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Preview master ready for Track #</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not retrieve preview for Track #</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="c1"># Continue to final master anyway</span>
+
+            <span class="c1"># Get final master</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">final_url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">retrieve_final_master</span><span class="p">(</span><span class="n">task_id</span><span class="p">)[</span><span class="s1">&#39;download_url_mastered&#39;</span><span class="p">]</span>
+                <span class="n">results</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">final_url</span>
+
+                <span class="c1"># Download the file</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">final_url</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">final_url</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;http://&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">final_url</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;https://&quot;</span><span class="p">)):</span>
+                    <span class="n">local_filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;final_master_track_</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">.wav&quot;</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">api_provider</span><span class="o">.</span><span class="n">download_file</span><span class="p">(</span><span class="n">final_url</span><span class="p">,</span> <span class="n">local_filename</span><span class="p">)</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Downloaded Track #</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">local_filename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Final URL for Track #</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2"> is not a valid URL: </span><span class="si">{</span><span class="n">final_url</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error processing Track #</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">results</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, RoEx LTD.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
