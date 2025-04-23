@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.poetry]
 name = "roex-python"
-version = "0.1.1"
+version = "1.1.1"
 description = "Pip package for the RoEx Tonn API"
 authors = ["RoEx <info@roexaudio.com>"]
 license = "MIT"
@@ -12,11 +12,27 @@ readme = "README.md"
 repository = "https://github.com/roex-audio/roex-python"
 homepage = "https://www.roexaudio.com"
 keywords = ["audio", "mixing", "mastering", "enhancement", "api"]
+classifiers=[
+    "Development Status :: 4 - Beta",  # Or another status like 3 - Alpha, 5 - Production/Stable
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Operating System :: OS Independent",
+    "Topic :: Multimedia :: Sound/Audio :: Analysis",
+    "Topic :: Multimedia :: Sound/Audio :: Mixers",
+    "Topic :: Software Development :: Libraries :: Python Modules"
+]
 
 [tool.poetry.dependencies]
 python = ">=3.7,<4.0"
 requests = "^2.25.0"
 soundfile = ">=0.10.0"  # Added dependency for audio file handling in examples
+tenacity = "^8.2.0"      # Added for retry logic
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.5"
