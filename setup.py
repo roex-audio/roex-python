@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="roex_python",  # Consider changing to match poetry.name "roex-python" if desired for PyPI
-    version="1.1.1",  # Updated version
+    version="1.2.0",  # Updated version
     author="RoEx",  # Updated Author to match poetry
     author_email="info@roexaudio.com",  # Updated email
     description="Pip package for the RoEx Tonn API",
@@ -41,4 +41,16 @@ setup(
         "soundfile>=0.10.0", # Added soundfile dependency
         "tenacity>=8.2.0"    # Added for retry logic
     ],
+    extras_require={
+        'dev': [
+            'pytest>=6.2.5',
+            'black>=21.6b0',
+            'isort>=5.9.2',
+            'mypy>=0.910'
+        ],
+        'docs': [
+            'sphinx>=7.0.0', # Added for documentation generation
+            'sphinx-rtd-theme>=2.0.0' # Added theme for Sphinx
+        ]
+    },
 )

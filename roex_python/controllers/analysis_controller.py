@@ -112,13 +112,8 @@ class AnalysisController:
                 mastered tracks. Defaults to False.
 
         Returns:
-            Dict[str, Any]: A dictionary containing the comparison results, structured as:
-                {
-                    'mix_a': {<metrics for mix A>},
-                    'mix_b': {<metrics for mix B>},
-                    'differences': {<calculated differences between metrics>}
-                }
-                Metrics include loudness, dynamics, stereo field, etc.
+            Dict[str, Any]: A dictionary containing 'mix_a' results, 'mix_b' results, 
+                          and calculated 'differences' between key metrics (loudness, etc.).
 
         Raises:
             requests.exceptions.RequestException: If either underlying `analyze_mix` call fails

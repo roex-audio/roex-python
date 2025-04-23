@@ -81,6 +81,7 @@ class MixController:
             >>>     # Proceed to poll using retrieve_preview_mix with this task_id
             >>> except Exception as e:
             >>>     print(f"Error starting mix preview: {e}")
+
         """
         logger.info("Creating mix preview")
         logger.debug(f"Mix request data: {request}")
@@ -148,6 +149,7 @@ class MixController:
             >>>     # Further process the results (e.g., download the file)
             >>> except Exception as e:
             >>>     print(f"Error retrieving mix preview: {e}")
+
         """
         logger.info(f"Retrieving preview mix for task ID: {task_id}")
         payload = {
@@ -214,11 +216,14 @@ class MixController:
 
         Args:
             request (FinalMixRequest): An object containing:
-                - `multitrack_task_id` (str): The task ID from the original preview.
-                - `gain_adjustments` (List[TrackGainData], optional): A list of gain
-                  adjustments to apply to specific tracks before final mixing.
-                - `return_stems` (bool, optional): Whether to return individual track stems
-                  along with the final mix. Defaults according to original preview request if omitted.
+
+                multitrack_task_id (str): The task ID from the original preview.
+
+                gain_adjustments (List[TrackGainData], optional): A list of gain
+                    adjustments to apply to specific tracks before final mixing.
+
+                return_stems (bool, optional): Whether to return individual track stems
+                    along with the final mix. Defaults according to original preview request if omitted.
 
         Returns:
             Dict[str, Any]: A dictionary containing the results of the final mix task.
@@ -257,6 +262,7 @@ class MixController:
             >>>     # Further process the results
             >>> except Exception as e:
             >>>     print(f"Error retrieving final mix: {e}")
+
         """
         logger.info(f"Retrieving final mix for task ID: {request.multitrack_task_id}")
         logger.debug(f"Final mix request data: {request}")

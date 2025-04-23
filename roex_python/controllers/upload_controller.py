@@ -38,24 +38,20 @@ class UploadController:
         Get a pre-signed URL for uploading a local file and a readable URL for API use.
 
         Calls the RoEx API's `/upload` endpoint to generate two URLs:
-        1. `signed_url`: A temporary URL to which you can upload your local file
+        
+        1. ``signed_url``: A temporary URL to which you can upload your local file
            using an HTTP PUT request. This URL has write permissions.
-        2. `readable_url`: The permanent URL that represents the file once uploaded.
+        2. ``readable_url``: The permanent URL that represents the file once uploaded.
            Use this URL in other RoEx API calls (e.g., mastering, mixing) that require
            a file location.
 
         Args:
             request (UploadUrlRequest): An object containing:
-                - `filename` (str): The desired filename for the uploaded file (e.g., "my_track.wav").
-                - `content_type` (str): The MIME type of the file (e.g., "audio/wav", "audio/flac").
+                - ``filename`` (str): The desired filename for the uploaded file (e.g., "my_track.wav").
+                - ``content_type`` (str): The MIME type of the file (e.g., "audio/wav", "audio/flac").
 
         Returns:
-            UploadUrlResponse: An object containing:
-                - `signed_url` (Optional[str]): The pre-signed URL for the PUT upload.
-                - `readable_url` (Optional[str]): The URL to use in subsequent API calls.
-                - `error` (bool): Indicates if the API call resulted in an error.
-                - `message` (str): Status message from the API.
-                - `info` (str): Additional info from the API.
+            UploadUrlResponse: An object containing `signed_url` and `readable_url`.
 
         Raises:
             requests.exceptions.RequestException: If the API request to `/upload` fails due to

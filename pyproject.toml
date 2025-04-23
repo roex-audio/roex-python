@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.poetry]
 name = "roex-python"
-version = "1.1.1"
+version = "1.2.0"
 description = "Pip package for the RoEx Tonn API"
 authors = ["RoEx <info@roexaudio.com>"]
 license = "MIT"
@@ -39,3 +39,5 @@ pytest = "^6.2.5"
 black = "^21.6b0"
 isort = "^5.9.2"
 mypy = "^0.910"
+sphinx = "^7.0.0" # Added for documentation generation
+sphinx-rtd-theme = "^2.0.0" # Added theme for Sphinx
