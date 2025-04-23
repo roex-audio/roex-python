@@ -48,6 +48,14 @@ from roex_python.models.upload import (
     UploadUrlResponse
 )
 
+# Import audio cleanup models
+from roex_python.models.audio_cleanup import (
+    AudioCleanupData,
+    AudioCleanupResults,
+    AudioCleanupResponse,
+    SoundSource
+)
+
 __all__ = [
     # Common models
     "DesiredLoudness",
@@ -81,5 +89,11 @@ __all__ = [
 
     # Upload models
     "UploadUrlRequest",
-    "UploadUrlResponse"
+    "UploadUrlResponse",
+
+    # Audio Cleanup models
+    "AudioCleanupData",
+    "AudioCleanupResults",
+    "AudioCleanupResponse",
+    "SoundSource"
 ]

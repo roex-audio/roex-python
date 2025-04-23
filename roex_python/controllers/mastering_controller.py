@@ -20,30 +20,62 @@ from roex_python.providers.api_provider import ApiProvider
 logger = logging.getLogger(__name__)
 
 class MasteringController:
-    """Controller for mastering operations"""
+    """Controller for managing audio mastering operations via the RoEx API."""
 
     def __init__(self, api_provider: ApiProvider):
         """
-        Initialize the mastering controller
+        Initialize the MasteringController.
+
+        Typically, this controller is accessed via `client.mastering` rather than
+        instantiated directly.
 
         Args:
-            api_provider: Provider for API interactions
+            api_provider (ApiProvider): An instance of ApiProvider configured with
+                the base URL and API key.
         """
         self.api_provider = api_provider
         logger.info("MasteringController initialized.")
 
     def create_mastering_preview(self, request: MasteringRequest) -> MasteringTaskResponse:
         """
-        Create a mastering preview
+        Initiate an audio mastering preview task.
+
+        Sends the track URL and mastering parameters (style, loudness, etc.)
+        to the RoEx API to start an asynchronous mastering process. Returns
+        immediately with a task ID for polling results.
 
         Args:
-            request: Mastering request parameters
+            request (MasteringRequest): An object containing the track URL and
+                mastering parameters (MusicalStyle, DesiredLoudness, etc.).
+                The track URL must point to an accessible WAV or FLAC file.
 
         Returns:
-            Response containing the mastering task ID
+            MasteringTaskResponse: An object containing the unique `mastering_task_id`
+                for the initiated preview task.
 
         Raises:
-            Exception: If the API request fails
+            requests.exceptions.RequestException: If the API request fails due to network
+                                                 issues or invalid endpoint.
+            Exception: If the API returns an error response (e.g., 4xx, 5xx status codes)
+                       indicating issues like invalid input, authentication failure, or
+                       server errors.
+
+        Example:
+            >>> from roex_python.models import MasteringRequest, MusicalStyle, DesiredLoudness
+            >>> # Assume 'client' is an initialized RoExClient
+            >>> # Assume 'track_url' is a URL obtained after uploading a local file
+            >>> master_request = MasteringRequest(
+            ...     track_url=track_url,
+            ...     musical_style=MusicalStyle.ELECTRONIC_EDM,
+            ...     desired_loudness=DesiredLoudness.HIGH,
+            ...     sample_rate="48000"
+            ... )
+            >>> try:
+            >>>     task_response = client.mastering.create_mastering_preview(master_request)
+            >>>     print(f"Mastering preview task started: {task_response.mastering_task_id}")
+            >>>     # Proceed to poll using retrieve_preview_master with this task_id
+            >>> except Exception as e:
+            >>>     print(f"Error starting mastering preview: {e}")
         """
         logger.info("Creating mastering preview")
         logger.debug(f"Mastering preview request data: {request}")
@@ -77,18 +109,43 @@ class MasteringController:
     def retrieve_preview_master(self, task_id: str, max_attempts: int = 30,
                                 poll_interval: int = 5) -> Dict[str, Any]:
         """
-        Retrieve the preview master, polling until it's ready
+        Retrieve the results of a mastering preview task, polling until complete.
+
+        Checks the status of a mastering task initiated by `create_mastering_preview`.
+        Polls the API periodically until the task completes or the maximum number
+        of attempts is reached.
 
         Args:
-            task_id: Mastering task ID from create_mastering_preview
-            max_attempts: Maximum number of polling attempts
-            poll_interval: Seconds between polling attempts
+            task_id (str): The `mastering_task_id` obtained from the
+                `create_mastering_preview` response.
+            max_attempts (int, optional): Maximum number of polling attempts before
+                timing out. Defaults to 30.
+            poll_interval (int, optional): Seconds to wait between polling attempts.
+                Defaults to 5.
 
         Returns:
-            Preview master results including download URL
+            Dict[str, Any]: A dictionary containing the results of the preview master.
+                Key fields typically include:
+                - 'status': Final status (e.g., 'MASTERING_TASK_PREVIEW_COMPLETED').
+                - 'download_url_mastered_preview': URL to download the preview audio.
+                Check the official RoEx API documentation for the exact structure.
 
         Raises:
-            Exception: If polling times out or the API request fails
+            requests.exceptions.RequestException: If an API request fails during polling.
+            Exception: If the task does not complete successfully within `max_attempts`,
+                       if the API returns an error during polling, or for other
+                       API errors (4xx/5xx).
+
+        Example:
+            >>> # Assume 'client' is an initialized RoExClient
+            >>> # Assume 'task_id' was obtained from create_mastering_preview
+            >>> try:
+            >>>     master_results = client.mastering.retrieve_preview_master(task_id)
+            >>>     print(f"Mastering Preview Status: {master_results.get('status')}")
+            >>>     print(f"Preview Download URL: {master_results.get('download_url_mastered_preview')}")
+            >>>     # Further process the results (e.g., download the file)
+            >>> except Exception as e:
+            >>>     print(f"Error retrieving mastering preview: {e}")
         """
         logger.info(f"Retrieving preview master for task ID: {task_id}")
         payload = {
@@ -139,20 +196,43 @@ class MasteringController:
             time.sleep(poll_interval)
 
         logger.error(f"Timeout waiting for preview master for task ID: {task_id} after {max_attempts} attempts.")
-        raise Exception(f"Preview master was not available after polling for task ID: {task_id}.")
+        raise Exception(f"Preview master task {task_id} did not complete after polling for {max_attempts * poll_interval} seconds.")
 
-    def retrieve_final_master(self, task_id: str) -> Any:
+    def retrieve_final_master(self, task_id: str) -> Dict[str, Any]:
         """
-        Retrieve the final master
+        Retrieve the final mastered audio file.
+
+        This method fetches the final output of a completed mastering task.
+        It's typically called after `create_mastering_preview` and potentially
+        `retrieve_preview_master` confirm the task is done, although polling
+        is not built into this specific retrieval method.
 
         Args:
-            task_id: Mastering task ID from create_mastering_preview
+            task_id (str): The `mastering_task_id` obtained from the
+                `create_mastering_preview` response.
 
         Returns:
-            Final master download URL or results dictionary
+            Dict[str, Any]: A dictionary containing the results of the final master.
+                Key fields typically include:
+                - 'status': Final status (e.g., 'MASTERING_TASK_FINAL_COMPLETED').
+                - 'download_url_mastered_final': URL to download the final audio.
+                Check the official RoEx API documentation for the exact structure.
 
         Raises:
-            Exception: If the API request fails
+            requests.exceptions.RequestException: If the API request fails.
+            Exception: If the API returns an error response (e.g., 4xx, 5xx status codes),
+                       indicating issues like task not found, task not complete, or server errors.
+
+        Example:
+            >>> # Assume 'client' is an initialized RoExClient
+            >>> # Assume 'task_id' was obtained from create_mastering_preview and preview is complete
+            >>> try:
+            >>>     final_master_results = client.mastering.retrieve_final_master(task_id)
+            >>>     print(f"Final Master Status: {final_master_results.get('status')}")
+            >>>     print(f"Final Download URL: {final_master_results.get('download_url_mastered_final')}")
+            >>>     # Further process the results
+            >>> except Exception as e:
+            >>>     print(f"Error retrieving final master: {e}")
         """
         logger.info(f"Retrieving final master for task ID: {task_id}")
         payload = {

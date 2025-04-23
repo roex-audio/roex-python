@@ -1,1 +1,29 @@
 token
+
+# Python Artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Build Artifacts
+build/
+dist/
+*.egg-info/
+
+# Virtual Environment
+.venv/
+venv/
+env/
+
+# Sphinx documentation build output
+_build/
+
+# Example output directories
+analysis_results/
+cleaned_audio/
+enhanced_tracks/
+mixed_tracks/
+single_masters/
+
+# Other untracked files
+test.sh
