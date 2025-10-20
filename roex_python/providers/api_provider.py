@@ -7,9 +7,20 @@ import logging
 from typing import Any, Dict, Optional
 from urllib.parse import urljoin
 import requests
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type, retry_if_result, before_sleep_log
 
 # Initialize logger for this module
 logger = logging.getLogger(__name__)
+
+# Helper function for tenacity: Checks if the result has a retry-able status code
+def should_retry_on_http_error(result: Any) -> bool:
+    """Return True if the result is a Response object with a retry-able server error status code."""
+    # Check if the result is actually a Response object
+    if isinstance(result, requests.Response):
+        return result.status_code in {500, 502, 503, 504}
+    # If it's not a Response object (e.g., it's the parsed dict), it means success, so don't retry.
+    return False
+
 
 class ApiProvider:
     """Provider for making API calls to the RoEx Tonn API"""
@@ -30,9 +41,15 @@ class ApiProvider:
         }
         logger.info(f"ApiProvider initialized for base URL: {self.base_url}")
 
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=1, max=10),
+        retry=(retry_if_exception_type(requests.exceptions.RequestException) | retry_if_result(should_retry_on_http_error)),
+        before_sleep=before_sleep_log(logger, logging.WARNING)
+    )
     def post(self, endpoint: str, data: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Make a POST request to the API
+        Make a POST request to the API, handling retries and specific errors.
 
         Args:
             endpoint: API endpoint path (e.g., "/mixpreview")
@@ -46,12 +63,13 @@ class ApiProvider:
         """
         url = urljoin(self.base_url, endpoint)
         logger.info(f"Making POST request to: {url}")
-        logger.debug(f"Request data (keys): {list(data.keys())}") # Log only keys for potentially sensitive data
+        logger.debug(f"Request data (keys): {list(data.keys())}")
 
         try:
             response = requests.post(url, json=data, headers=self.headers)
             logger.info(f"Received response with status code: {response.status_code} from {url}")
-            # Log non-OK status codes as warnings or errors
+
+            # Check status *after* tenacity is done (if it didn't retry to success)
             if not response.ok:
                 logger.warning(f"Non-OK ({response.status_code}) response from {url}. Response text: {response.text[:500]}...") # Log beginning of error text
             response.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
@@ -67,9 +85,15 @@ class ApiProvider:
             logger.exception(f"An unexpected error occurred during request: POST {url}. Error: {e}")
             raise
 
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=1, max=10),
+        retry=(retry_if_exception_type(requests.exceptions.RequestException) | retry_if_result(should_retry_on_http_error)),
+        before_sleep=before_sleep_log(logger, logging.WARNING)
+    )
     def get(self, endpoint: str) -> Any:
         """
-        Make a GET request to the API
+        Make a GET request to the API, handling retries and specific errors.
 
         Args:
             endpoint: API endpoint path (e.g., "/health")
@@ -86,15 +110,18 @@ class ApiProvider:
         try:
             response = requests.get(url, headers=self.headers)
             logger.info(f"Received response with status code: {response.status_code} from {url}")
-            # Log non-OK status codes as warnings or errors
+            
+            # Check status *after* tenacity is done (if it didn't retry to success)
             if not response.ok:
                 logger.warning(f"Non-OK ({response.status_code}) response from {url}. Response text: {response.text[:500]}...") # Log beginning of error text
             response.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
             # Try to parse as JSON, but handle non-JSON responses gracefully
             try:
                 return response.json()
-            except ValueError:
-                return response.text
+            except ValueError: # Handle cases where API might return non-JSON on success
+                 logger.warning(f"Response from GET {url} is not JSON. Returning raw text.")
+                 return response.text # Or raise RoexApiException if JSON is always expected
+
         except requests.exceptions.RequestException as e:
             logger.exception(f"HTTP request failed: GET {url}. Error: {e}")
             raise

@@ -1,0 +1,455 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>roex_python.controllers.mix_controller &mdash; roex-python 1.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=61243dd2"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            roex-python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">roex-python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">roex_python.controllers.mix_controller</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for roex_python.controllers.mix_controller</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Controller for multitrack mixing operations</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">List</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">roex_python.models.mixing</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">MultitrackMixRequest</span><span class="p">,</span>
+    <span class="n">MultitrackTaskResponse</span><span class="p">,</span>
+    <span class="n">FinalMixRequest</span><span class="p">,</span>
+    <span class="n">TrackData</span><span class="p">,</span>
+    <span class="n">TrackGainData</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">roex_python.providers.api_provider</span><span class="w"> </span><span class="kn">import</span> <span class="n">ApiProvider</span>
+
+<span class="c1"># Initialize logger for this module</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<div class="viewcode-block" id="MixController">
+<a class="viewcode-back" href="../../../api.html#roex_python.controllers.mix_controller.MixController">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MixController</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Controller for managing multitrack mixing operations via the RoEx API.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">api_provider</span><span class="p">:</span> <span class="n">ApiProvider</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the MixController.</span>
+
+<span class="sd">        Typically, this controller is accessed via `client.mix` rather than</span>
+<span class="sd">        instantiated directly.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            api_provider (ApiProvider): An instance of ApiProvider configured with</span>
+<span class="sd">                the base URL and API key.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">api_provider</span> <span class="o">=</span> <span class="n">api_provider</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;MixController initialized.&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="MixController.create_mix_preview">
+<a class="viewcode-back" href="../../../api.html#roex_python.controllers.mix_controller.MixController.create_mix_preview">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_mix_preview</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">:</span> <span class="n">MultitrackMixRequest</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MultitrackTaskResponse</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initiate a multitrack mix preview task.</span>
+
+<span class="sd">        This method sends the track data and mixing parameters to the RoEx API</span>
+<span class="sd">        to start an asynchronous mixing process. It returns immediately with a</span>
+<span class="sd">        task ID, which can be used with `retrieve_preview_mix` to check the status</span>
+<span class="sd">        and get the results once processing is complete.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            request (MultitrackMixRequest): An object containing the list of tracks</span>
+<span class="sd">                (TrackData) and mixing parameters (musical style, return stems, etc.).</span>
+<span class="sd">                Track URLs must point to accessible WAV or FLAC files.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            MultitrackTaskResponse: An object containing the unique `multitrack_task_id`</span>
+<span class="sd">                for the initiated preview task.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            requests.exceptions.RequestException: If the API request fails due to network</span>
+<span class="sd">                                                 issues or invalid endpoint.</span>
+<span class="sd">            Exception: If the API returns an error response (e.g., 4xx, 5xx status codes)</span>
+<span class="sd">                       indicating issues like invalid input, authentication failure, or</span>
+<span class="sd">                       server errors.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; from roex_python.models import TrackData, MultitrackMixRequest, MusicalStyle, InstrumentGroup</span>
+<span class="sd">            &gt;&gt;&gt; # Assume &#39;client&#39; is an initialized RoExClient</span>
+<span class="sd">            &gt;&gt;&gt; # Assume &#39;track_url_1&#39;, &#39;track_url_2&#39; are URLs obtained after uploading local files</span>
+<span class="sd">            &gt;&gt;&gt; tracks = [</span>
+<span class="sd">            ...     TrackData(track_url=track_url_1, instrument_group=InstrumentGroup.BASS_GROUP),</span>
+<span class="sd">            ...     TrackData(track_url=track_url_2, instrument_group=InstrumentGroup.VOCAL_GROUP)</span>
+<span class="sd">            ... ]</span>
+<span class="sd">            &gt;&gt;&gt; mix_request = MultitrackMixRequest(</span>
+<span class="sd">            ...     track_data=tracks,</span>
+<span class="sd">            ...     musical_style=MusicalStyle.POP,</span>
+<span class="sd">            ...     return_stems=False</span>
+<span class="sd">            ... )</span>
+<span class="sd">            &gt;&gt;&gt; try:</span>
+<span class="sd">            &gt;&gt;&gt;     task_response = client.mix.create_mix_preview(mix_request)</span>
+<span class="sd">            &gt;&gt;&gt;     print(f&quot;Mix preview task started: {task_response.multitrack_task_id}&quot;)</span>
+<span class="sd">            &gt;&gt;&gt;     # Proceed to poll using retrieve_preview_mix with this task_id</span>
+<span class="sd">            &gt;&gt;&gt; except Exception as e:</span>
+<span class="sd">            &gt;&gt;&gt;     print(f&quot;Error starting mix preview: {e}&quot;)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Creating mix preview&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Mix request data: </span><span class="si">{</span><span class="n">request</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">payload</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_mix_preview_payload</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">api_provider</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/mixpreview&quot;</span><span class="p">,</span> <span class="n">payload</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Mix preview created successfully. Task ID: </span><span class="si">{</span><span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;multitrack_task_id&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">MultitrackTaskResponse</span><span class="p">(</span>
+                <span class="n">multitrack_task_id</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;multitrack_task_id&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">HTTPError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="c1"># Log specific HTTP errors</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;HTTP error creating mix preview: </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="si">}</span><span class="s2"> - </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">text</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to create mix preview: </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="si">}</span><span class="s2"> - </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">text</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="c1"># Catch other potential exceptions (e.g., connection errors)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unexpected error creating mix preview: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span></div>
+
+
+<div class="viewcode-block" id="MixController.retrieve_preview_mix">
+<a class="viewcode-back" href="../../../api.html#roex_python.controllers.mix_controller.MixController.retrieve_preview_mix">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">retrieve_preview_mix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">retrieve_fx_settings</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                             <span class="n">max_attempts</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">30</span><span class="p">,</span> <span class="n">poll_interval</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Retrieve the results of a multitrack mix preview task, polling until complete.</span>
+
+<span class="sd">        This method checks the status of a mix preview task initiated by</span>
+<span class="sd">        `create_mix_preview`. It polls the API endpoint periodically until the task</span>
+<span class="sd">        status indicates completion (or failure) or the maximum number of attempts</span>
+<span class="sd">        is reached.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            task_id (str): The `multitrack_task_id` obtained from the</span>
+<span class="sd">                `create_mix_preview` response.</span>
+<span class="sd">            retrieve_fx_settings (bool, optional): Whether to retrieve detailed FX settings</span>
+<span class="sd">                applied during the mix. Note: This might incur additional charges</span>
+<span class="sd">                depending on the API plan. Defaults to False.</span>
+<span class="sd">            max_attempts (int, optional): The maximum number of times to poll the API</span>
+<span class="sd">                before timing out. Defaults to 30.</span>
+<span class="sd">            poll_interval (int, optional): The number of seconds to wait between</span>
+<span class="sd">                polling attempts. Defaults to 5.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dict[str, Any]: A dictionary containing the results of the preview mix task.</span>
+<span class="sd">                The structure typically includes:</span>
+<span class="sd">                - &#39;status&#39;: The final status of the task (e.g., &#39;MIX_TASK_PREVIEW_COMPLETED&#39;).</span>
+<span class="sd">                - &#39;previewMixDownloadUrl&#39;: URL to download the preview mix audio file.</span>
+<span class="sd">                - &#39;stemsDownloadUrl&#39;: URL to download stems (if requested).</span>
+<span class="sd">                - &#39;settings&#39;: Applied settings (gain, pan, etc.).</span>
+<span class="sd">                - &#39;fxSettings&#39;: Detailed FX settings (if requested and available).</span>
+<span class="sd">                Check the official RoEx API documentation for the exact structure.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            requests.exceptions.RequestException: If an API request fails during polling.</span>
+<span class="sd">            Exception: If the task does not complete successfully within the</span>
+<span class="sd">                       `max_attempts` or if the API returns an error during polling.</span>
+<span class="sd">                       Also raised for other API errors (4xx/5xx).</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; # Assume &#39;client&#39; is an initialized RoExClient</span>
+<span class="sd">            &gt;&gt;&gt; # Assume &#39;task_id&#39; was obtained from create_mix_preview</span>
+<span class="sd">            &gt;&gt;&gt; try:</span>
+<span class="sd">            &gt;&gt;&gt;     preview_results = client.mix.retrieve_preview_mix(task_id)</span>
+<span class="sd">            &gt;&gt;&gt;     print(f&quot;Preview Status: {preview_results.get(&#39;status&#39;)}&quot;)</span>
+<span class="sd">            &gt;&gt;&gt;     print(f&quot;Preview Download URL: {preview_results.get(&#39;previewMixDownloadUrl&#39;)}&quot;)</span>
+<span class="sd">            &gt;&gt;&gt;     # Further process the results (e.g., download the file)</span>
+<span class="sd">            &gt;&gt;&gt; except Exception as e:</span>
+<span class="sd">            &gt;&gt;&gt;     print(f&quot;Error retrieving mix preview: {e}&quot;)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Retrieving preview mix for task ID: </span><span class="si">{</span><span class="n">task_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">payload</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;multitrackData&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;multitrackTaskId&quot;</span><span class="p">:</span> <span class="n">task_id</span><span class="p">,</span>
+                <span class="s2">&quot;retrieveFXSettings&quot;</span><span class="p">:</span> <span class="n">retrieve_fx_settings</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Initial request</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">api_provider</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/retrievepreviewmix&quot;</span><span class="p">,</span> <span class="n">payload</span><span class="p">)</span>
+
+            <span class="c1"># Check if the mix is already complete</span>
+            <span class="k">if</span> <span class="s2">&quot;previewMixTaskResults&quot;</span> <span class="ow">in</span> <span class="n">response</span> <span class="ow">and</span> <span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;status&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;MIX_TASK_PREVIEW_COMPLETED&quot;</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Preview mix for task </span><span class="si">{</span><span class="n">task_id</span><span class="si">}</span><span class="s2"> is ready.&quot;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">response</span><span class="p">[</span><span class="s2">&quot;previewMixTaskResults&quot;</span><span class="p">]</span>
+
+            <span class="c1"># If status code is 200 but no results, it might still be processing</span>
+            <span class="k">if</span> <span class="s2">&quot;status&quot;</span> <span class="ow">in</span> <span class="n">response</span> <span class="ow">and</span> <span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;status&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="s2">&quot;MIX_TASK_PREVIEW_COMPLETED&quot;</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Mix preview is pending. Starting polling...&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># If the response doesn&#39;t indicate it&#39;s processing, return it as is</span>
+                <span class="k">return</span> <span class="n">response</span>
+        <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">HTTPError</span><span class="p">:</span>
+            <span class="c1"># Initial request failed, let&#39;s try polling</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Initial request failed. Starting polling...&quot;</span><span class="p">)</span>
+            <span class="k">pass</span>
+
+        <span class="c1"># Poll for results</span>
+        <span class="k">for</span> <span class="n">attempt</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_attempts</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Polling attempt </span><span class="si">{</span><span class="n">attempt</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">max_attempts</span><span class="si">}</span><span class="s2">...&quot;</span><span class="p">)</span>
+                <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">api_provider</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/retrievepreviewmix&quot;</span><span class="p">,</span> <span class="n">payload</span><span class="p">)</span>
+
+                <span class="c1"># Check if the mix is complete</span>
+                <span class="k">if</span> <span class="s2">&quot;previewMixTaskResults&quot;</span> <span class="ow">in</span> <span class="n">response</span><span class="p">:</span>
+                    <span class="n">results</span> <span class="o">=</span> <span class="n">response</span><span class="p">[</span><span class="s2">&quot;previewMixTaskResults&quot;</span><span class="p">]</span>
+                    <span class="n">status</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;status&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">status</span> <span class="o">==</span> <span class="s2">&quot;MIX_TASK_PREVIEW_COMPLETED&quot;</span><span class="p">:</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Preview mix for task </span><span class="si">{</span><span class="n">task_id</span><span class="si">}</span><span class="s2"> is ready.&quot;</span><span class="p">)</span>
+                        <span class="k">return</span> <span class="n">results</span>
+
+                <span class="c1"># Check if it&#39;s still processing</span>
+                <span class="k">if</span> <span class="s2">&quot;status&quot;</span> <span class="ow">in</span> <span class="n">response</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Current status: </span><span class="si">{</span><span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;status&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">HTTPError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error during polling: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="c1"># Wait before next attempt</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">poll_interval</span><span class="p">)</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Polling timed out for preview mix task </span><span class="si">{</span><span class="n">task_id</span><span class="si">}</span><span class="s2"> after </span><span class="si">{</span><span class="n">max_attempts</span><span class="si">}</span><span class="s2"> attempts.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Preview mix task </span><span class="si">{</span><span class="n">task_id</span><span class="si">}</span><span class="s2"> did not complete after polling for </span><span class="si">{</span><span class="n">max_attempts</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">poll_interval</span><span class="si">}</span><span class="s2"> seconds.&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MixController.retrieve_final_mix">
+<a class="viewcode-back" href="../../../api.html#roex_python.controllers.mix_controller.MixController.retrieve_final_mix">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">retrieve_final_mix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">:</span> <span class="n">FinalMixRequest</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Retrieve the final multitrack mix, potentially with gain adjustments.</span>
+
+<span class="sd">        This method is used to generate the final mix output. It typically follows</span>
+<span class="sd">        a `create_mix_preview` and `retrieve_preview_mix` sequence, allowing users</span>
+<span class="sd">        to apply gain adjustments based on the preview before generating the final</span>
+<span class="sd">        audio file(s).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            request (FinalMixRequest): An object containing:</span>
+
+<span class="sd">                multitrack_task_id (str): The task ID from the original preview.</span>
+
+<span class="sd">                gain_adjustments (List[TrackGainData], optional): A list of gain</span>
+<span class="sd">                    adjustments to apply to specific tracks before final mixing.</span>
+
+<span class="sd">                return_stems (bool, optional): Whether to return individual track stems</span>
+<span class="sd">                    along with the final mix. Defaults according to original preview request if omitted.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dict[str, Any]: A dictionary containing the results of the final mix task.</span>
+<span class="sd">                The structure typically includes:</span>
+<span class="sd">                - &#39;status&#39;: The status of the final mix generation (e.g., &#39;FINAL_MIX_COMPLETE&#39;).</span>
+<span class="sd">                - &#39;finalMixDownloadUrl&#39;: URL to download the final mix audio file.</span>
+<span class="sd">                - &#39;stemsDownloadUrl&#39;: URL to download stems (if requested).</span>
+<span class="sd">                Check the official RoEx API documentation for the exact structure.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            requests.exceptions.RequestException: If the API request fails.</span>
+<span class="sd">            Exception: If the API returns an error response (e.g., 4xx, 5xx status codes)</span>
+<span class="sd">                       indicating issues like invalid input, task not found, or server errors.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; from roex_python.models import FinalMixRequest, TrackGainData, InstrumentGroup</span>
+<span class="sd">            &gt;&gt;&gt; # Assume &#39;client&#39; is an initialized RoExClient</span>
+<span class="sd">            &gt;&gt;&gt; # Assume &#39;task_id&#39; was obtained from create_mix_preview</span>
+<span class="sd">            &gt;&gt;&gt;</span>
+<span class="sd">            &gt;&gt;&gt; # Optional: Define gain adjustments based on preview analysis</span>
+<span class="sd">            &gt;&gt;&gt; adjustments = [</span>
+<span class="sd">            ...     TrackGainData(instrument_group=InstrumentGroup.BASS_GROUP, gain_db=1.5),</span>
+<span class="sd">            ...     TrackGainData(instrument_group=InstrumentGroup.VOCAL_GROUP, gain_db=-0.5)</span>
+<span class="sd">            ... ]</span>
+<span class="sd">            &gt;&gt;&gt;</span>
+<span class="sd">            &gt;&gt;&gt; final_mix_request = FinalMixRequest(</span>
+<span class="sd">            ...     multitrack_task_id=task_id,</span>
+<span class="sd">            ...     gain_adjustments=adjustments, # Can be None or empty list if no adjustments</span>
+<span class="sd">            ...     return_stems=True # Optional: Override stem generation</span>
+<span class="sd">            ... )</span>
+<span class="sd">            &gt;&gt;&gt;</span>
+<span class="sd">            &gt;&gt;&gt; try:</span>
+<span class="sd">            &gt;&gt;&gt;     final_mix_results = client.mix.retrieve_final_mix(final_mix_request)</span>
+<span class="sd">            &gt;&gt;&gt;     print(f&quot;Final Mix Status: {final_mix_results.get(&#39;status&#39;)}&quot;)</span>
+<span class="sd">            &gt;&gt;&gt;     print(f&quot;Final Mix URL: {final_mix_results.get(&#39;finalMixDownloadUrl&#39;)}&quot;)</span>
+<span class="sd">            &gt;&gt;&gt;     # Further process the results</span>
+<span class="sd">            &gt;&gt;&gt; except Exception as e:</span>
+<span class="sd">            &gt;&gt;&gt;     print(f&quot;Error retrieving final mix: {e}&quot;)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Retrieving final mix for task ID: </span><span class="si">{</span><span class="n">request</span><span class="o">.</span><span class="n">multitrack_task_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Final mix request data: </span><span class="si">{</span><span class="n">request</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">payload</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_final_mix_payload</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">api_provider</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/retrievefinalmix&quot;</span><span class="p">,</span> <span class="n">payload</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Final mix retrieved successfully.&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s2">&quot;applyAudioEffectsResults&quot;</span> <span class="ow">in</span> <span class="n">response</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">response</span><span class="p">[</span><span class="s2">&quot;applyAudioEffectsResults&quot;</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">response</span>
+        <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">HTTPError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="c1"># Log specific HTTP errors</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;HTTP error retrieving final mix: </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="si">}</span><span class="s2"> - </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">text</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to retrieve final mix: </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="si">}</span><span class="s2"> - </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">text</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="c1"># Catch other potential exceptions</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unexpected error retrieving final mix: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_prepare_mix_preview_payload</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">:</span> <span class="n">MultitrackMixRequest</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert the model to API payload for mix preview</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            request (MultitrackMixRequest): Multitrack mix request</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            API payload dictionary</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Preparing mix preview payload&quot;</span><span class="p">)</span>
+        <span class="n">track_data</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">track</span> <span class="ow">in</span> <span class="n">request</span><span class="o">.</span><span class="n">track_data</span><span class="p">:</span>
+            <span class="n">track_data</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                <span class="s2">&quot;trackURL&quot;</span><span class="p">:</span> <span class="n">track</span><span class="o">.</span><span class="n">track_url</span><span class="p">,</span>
+                <span class="s2">&quot;instrumentGroup&quot;</span><span class="p">:</span> <span class="n">track</span><span class="o">.</span><span class="n">instrument_group</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="s2">&quot;presenceSetting&quot;</span><span class="p">:</span> <span class="n">track</span><span class="o">.</span><span class="n">presence_setting</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="s2">&quot;panPreference&quot;</span><span class="p">:</span> <span class="n">track</span><span class="o">.</span><span class="n">pan_preference</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="s2">&quot;reverbPreference&quot;</span><span class="p">:</span> <span class="n">track</span><span class="o">.</span><span class="n">reverb_preference</span><span class="o">.</span><span class="n">value</span>
+            <span class="p">})</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;multitrackData&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;trackData&quot;</span><span class="p">:</span> <span class="n">track_data</span><span class="p">,</span>
+                <span class="s2">&quot;musicalStyle&quot;</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">musical_style</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="s2">&quot;returnStems&quot;</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">return_stems</span><span class="p">,</span>
+                <span class="s2">&quot;sampleRate&quot;</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">sample_rate</span><span class="p">,</span>
+                <span class="s2">&quot;webhookURL&quot;</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">webhook_url</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_prepare_final_mix_payload</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">:</span> <span class="n">FinalMixRequest</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert the model to API payload for final mix</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            request (FinalMixRequest): Final mix request</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            API payload dictionary</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Preparing final mix payload&quot;</span><span class="p">)</span>
+        <span class="n">track_data</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">track</span> <span class="ow">in</span> <span class="n">request</span><span class="o">.</span><span class="n">track_data</span><span class="p">:</span>
+            <span class="n">track_data</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                <span class="s2">&quot;trackURL&quot;</span><span class="p">:</span> <span class="n">track</span><span class="o">.</span><span class="n">track_url</span><span class="p">,</span>
+                <span class="s2">&quot;gainDb&quot;</span><span class="p">:</span> <span class="n">track</span><span class="o">.</span><span class="n">gain_db</span>
+            <span class="p">})</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;applyAudioEffectsData&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;multitrackTaskId&quot;</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">multitrack_task_id</span><span class="p">,</span>
+                <span class="s2">&quot;trackData&quot;</span><span class="p">:</span> <span class="n">track_data</span><span class="p">,</span>
+                <span class="s2">&quot;returnStems&quot;</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">return_stems</span><span class="p">,</span>
+                <span class="s2">&quot;sampleRate&quot;</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">sample_rate</span>
+            <span class="p">}</span>
+        <span class="p">}</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, RoEx LTD.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

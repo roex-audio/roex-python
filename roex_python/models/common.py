@@ -9,14 +9,28 @@ from typing import Optional
 
 @dataclass
 class BaseResponse:
-    """Base response model with common fields."""
+    """
+    Base dataclass inherited by most API response models.
+
+    Provides common fields to indicate the overall status of an API request.
+    Specific results or data related to the operation are typically found in
+    subclass-specific fields.
+    """
     error: bool = False
+    """bool: Indicates if the API request itself encountered an error (e.g., bad request, authentication failure). Defaults to False."""
     message: str = ""
+    """str: A general status message from the API regarding the request."""
     info: str = ""
+    """str: Additional informational text from the API, if any."""
 
 
 class MusicalStyle(Enum):
-    """Musical styles for mixing and mastering"""
+    """
+    Enumeration of musical styles used as references for mixing and mastering.
+
+    Used in `MultitrackMixRequest` and `MasteringRequest` to guide the AI's
+    processing decisions based on genre conventions.
+    """
     ROCK_INDIE = "ROCK_INDIE"
     POP = "POP"
     ACOUSTIC = "ACOUSTIC"
@@ -29,7 +43,12 @@ class MusicalStyle(Enum):
 
 
 class InstrumentGroup(Enum):
-    """Instrument group classifications for mixing"""
+    """
+    Enumeration of instrument group classifications for multitrack mixing.
+
+    Used within a `MixTrack` object to identify the primary role of the audio track
+    (e.g., vocals, bass, drums) to inform the mixing process.
+    """
     BASS_GROUP = "BASS_GROUP"
     DRUMS_GROUP = "DRUMS_GROUP"
     KICK_GROUP = "KICK_GROUP"
@@ -54,14 +73,24 @@ class InstrumentGroup(Enum):
 
 
 class PresenceSetting(Enum):
-    """Track presence settings for mixing"""
+    """
+    Enumeration for specifying the desired presence of a track in a mix.
+
+    Used within a `MixTrack` object to guide the mixing AI on how prominent
+    a track should be (e.g., LEAD, NORMAL, BACKGROUND).
+    """
     NORMAL = "NORMAL"
     LEAD = "LEAD"
     BACKGROUND = "BACKGROUND"
 
 
 class PanPreference(Enum):
-    """Track panning preferences for mixing"""
+    """
+    Enumeration for specifying panning preferences for a track in a mix.
+
+    Used within a `MixTrack` object to suggest a stereo placement (LEFT, CENTRE, RIGHT)
+    or indicate NO_PREFERENCE, allowing the AI to decide.
+    """
     NO_PREFERENCE = "NO_PREFERENCE"
     LEFT = "LEFT"
     CENTRE = "CENTRE"
@@ -69,7 +98,12 @@ class PanPreference(Enum):
 
 
 class ReverbPreference(Enum):
-    """Track reverb preferences for mixing"""
+    """
+    Enumeration for specifying the desired amount of reverb for a track in a mix.
+
+    Used within a `MixTrack` object to guide the amount of reverb applied
+    (NONE, LOW, MEDIUM, HIGH).
+    """
     NONE = "NONE"
     LOW = "LOW"
     MEDIUM = "MEDIUM"
@@ -77,13 +111,23 @@ class ReverbPreference(Enum):
 
 
 class DesiredLoudness(Enum):
-    """Loudness presets for mastering"""
+    """
+    Enumeration of general loudness targets, primarily used for mastering.
+
+    Used in `MasteringRequest` to set the overall loudness goal (LOW, MEDIUM, HIGH).
+    Note: For mix enhancement, use `LoudnessPreference` instead.
+    """
     LOW = "LOW"
     MEDIUM = "MEDIUM"
     HIGH = "HIGH"
 
 
 class LoudnessPreference(Enum):
-    """Loudness targets for enhancement"""
+    """
+    Enumeration of specific loudness targets, primarily used for mix enhancement.
+
+    Used in `MixEnhanceRequest` to target standard loudness levels like
+    CD_LOUDNESS or STREAMING_LOUDNESS.
+    """
     CD_LOUDNESS = "CD_LOUDNESS"
     STREAMING_LOUDNESS = "STREAMING_LOUDNESS"

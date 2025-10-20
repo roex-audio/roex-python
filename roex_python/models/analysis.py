@@ -42,7 +42,15 @@ class AnalysisMusicalStyle(Enum):
 
 @dataclass
 class MixAnalysisRequest:
-    """Model for a mix analysis request"""
+    """
+    Represents the input parameters for requesting a mix analysis.
+
+    This dataclass is used to structure the data sent to the RoEx API's
+    `/mixanalysis` endpoint.
+    """
     audio_file_location: str
+    """str: The URL of the audio file (WAV or FLAC) to be analyzed. This URL must be accessible by the RoEx API."""
     musical_style: AnalysisMusicalStyle
+    """AnalysisMusicalStyle: The musical style of the track, used as a reference for the analysis (e.g., ROCK, POP, ELECTRONIC)."""
     is_master: bool
+    """bool: Indicates whether the provided audio file is a mastered track (True) or a mix (False)."""

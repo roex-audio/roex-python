@@ -1,0 +1,223 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>roex_python.client &mdash; roex-python 1.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=61243dd2"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            roex-python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">roex-python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">roex_python.client</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for roex_python.client</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Main RoEx client interface that unifies all controllers</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.controllers.mix_controller</span><span class="w"> </span><span class="kn">import</span> <span class="n">MixController</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.controllers.mastering_controller</span><span class="w"> </span><span class="kn">import</span> <span class="n">MasteringController</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.controllers.analysis_controller</span><span class="w"> </span><span class="kn">import</span> <span class="n">AnalysisController</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.controllers.enhance_controller</span><span class="w"> </span><span class="kn">import</span> <span class="n">EnhanceController</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.controllers.audio_cleanup_controller</span><span class="w"> </span><span class="kn">import</span> <span class="n">AudioCleanupController</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.controllers.upload_controller</span><span class="w"> </span><span class="kn">import</span> <span class="n">UploadController</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.providers.api_provider</span><span class="w"> </span><span class="kn">import</span> <span class="n">ApiProvider</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+
+<span class="c1"># Initialize logger for this module</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<div class="viewcode-block" id="RoExClient">
+<a class="viewcode-back" href="../../api.html#roex_python.client.RoExClient">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">RoExClient</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Main client for interacting with the RoEx Tonn API.</span>
+
+<span class="sd">    This client provides access to various audio processing features through dedicated controllers:</span>
+<span class="sd">    - `mix`: Multitrack mixing (preview, final, gain adjustments).</span>
+<span class="sd">    - `mastering`: Audio mastering (preview, final).</span>
+<span class="sd">    - `analysis`: Mix/master analysis.</span>
+<span class="sd">    - `enhance`: Mix enhancement.</span>
+<span class="sd">    - `audio_cleanup`: Audio source cleanup.</span>
+<span class="sd">    - `upload`: File upload helpers (getting signed URLs).</span>
+
+<span class="sd">    Authentication is handled via an API key.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        api_provider (ApiProvider): Handles the underlying HTTP requests and authentication.</span>
+<span class="sd">        mix (MixController): Controller for mixing operations.</span>
+<span class="sd">        mastering (MasteringController): Controller for mastering operations.</span>
+<span class="sd">        analysis (AnalysisController): Controller for analysis operations.</span>
+<span class="sd">        enhance (EnhanceController): Controller for enhancement operations.</span>
+<span class="sd">        audio_cleanup (AudioCleanupController): Controller for cleanup operations.</span>
+<span class="sd">        upload (UploadController): Controller for file upload operations.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; from roex_python.client import RoExClient</span>
+<span class="sd">        &gt;&gt;&gt; import os</span>
+<span class="sd">        &gt;&gt;&gt;</span>
+<span class="sd">        &gt;&gt;&gt; api_key = os.environ.get(&quot;ROEX_API_KEY&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; if not api_key:</span>
+<span class="sd">        &gt;&gt;&gt;     raise ValueError(&quot;ROEX_API_KEY environment variable not set.&quot;)</span>
+<span class="sd">        &gt;&gt;&gt;</span>
+<span class="sd">        &gt;&gt;&gt; client = RoExClient(api_key=api_key)</span>
+<span class="sd">        &gt;&gt;&gt; try:</span>
+<span class="sd">        &gt;&gt;&gt;     health_status = client.health_check()</span>
+<span class="sd">        &gt;&gt;&gt;     print(f&quot;API Health: {health_status}&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; except Exception as e:</span>
+<span class="sd">        &gt;&gt;&gt;     print(f&quot;Failed to connect to API: {e}&quot;)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">api_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">base_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;https://tonn.roexaudio.com&quot;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the RoEx client.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            api_key (str): Your RoEx API key. Obtainable from the RoEx Tonn Portal:</span>
+<span class="sd">                https://tonn-portal.roexaudio.com</span>
+<span class="sd">            base_url (str, optional): The base URL for the RoEx Tonn API.</span>
+<span class="sd">                Defaults to &quot;https://tonn.roexaudio.com&quot;.</span>
+<span class="sd">                Can be changed for testing or specific API environments.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If the API key is invalid or missing (though actual check happens on first API call).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">api_key</span><span class="p">:</span>
+            <span class="c1"># Early check for missing key, though ApiProvider might do more validation</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;API key cannot be empty.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">api_provider</span> <span class="o">=</span> <span class="n">ApiProvider</span><span class="p">(</span><span class="n">base_url</span><span class="o">=</span><span class="n">base_url</span><span class="p">,</span> <span class="n">api_key</span><span class="o">=</span><span class="n">api_key</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;RoExClient initialized for base URL: </span><span class="si">{</span><span class="n">base_url</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Initialize controllers</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mix</span> <span class="o">=</span> <span class="n">MixController</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">api_provider</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mastering</span> <span class="o">=</span> <span class="n">MasteringController</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">api_provider</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">analysis</span> <span class="o">=</span> <span class="n">AnalysisController</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">api_provider</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">enhance</span> <span class="o">=</span> <span class="n">EnhanceController</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">api_provider</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">audio_cleanup</span> <span class="o">=</span> <span class="n">AudioCleanupController</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">api_provider</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">upload</span> <span class="o">=</span> <span class="n">UploadController</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">api_provider</span><span class="p">)</span>
+
+<div class="viewcode-block" id="RoExClient.health_check">
+<a class="viewcode-back" href="../../api.html#roex_python.client.RoExClient.health_check">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">health_check</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Perform a simple health check against the RoEx API.</span>
+
+<span class="sd">        This method sends a GET request to the API&#39;s health endpoint.</span>
+<span class="sd">        A successful response indicates that the API is reachable and operational.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            str: A status message from the API, typically indicating health (e.g., &quot;OK&quot;).</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            requests.exceptions.RequestException: If there&#39;s an issue connecting to the API</span>
+<span class="sd">                                                 (e.g., network error, invalid URL).</span>
+<span class="sd">            Exception: For other potential API errors (e.g., 4xx/5xx responses handled by ApiProvider).</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; client = RoExClient(api_key=&quot;YOUR_API_KEY&quot;)</span>
+<span class="sd">            &gt;&gt;&gt; try:</span>
+<span class="sd">            &gt;&gt;&gt;     status = client.health_check()</span>
+<span class="sd">            &gt;&gt;&gt;     print(f&quot;API Status: {status}&quot;)</span>
+<span class="sd">            &gt;&gt;&gt; except Exception as e:</span>
+<span class="sd">            &gt;&gt;&gt;     print(f&quot;Health check failed: {e}&quot;)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># The actual request is simple, but the docstring explains the context.</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">api_provider</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/health&quot;</span><span class="p">)</span>
+            <span class="c1"># Assuming ApiProvider returns the response body directly for simple GETs</span>
+            <span class="c1"># or raises an exception on failure.</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;API health check successful: </span><span class="si">{</span><span class="n">response</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">response</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;API health check failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="c1"># Re-raise the exception after logging</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, RoEx LTD.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
