@@ -1,24 +1,48 @@
 [build-system]
-requires = ["setuptools>=42", "wheel"]
+requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
-[tool.poetry]
-name = "roex-python"
-version = "0.1.1"
+[project]
+name = "roex_python"
+version = "1.2.1"
 description = "Pip package for the RoEx Tonn API"
-authors = ["RoEx <info@roexaudio.com>"]
-license = "MIT"
 readme = "README.md"
-repository = "https://github.com/roex-audio/roex-python"
-homepage = "https://www.roexaudio.com"
-keywords = ["audio", "mixing", "mastering", "enhancement", "api"]
+authors = [
+    {name = "RoEx Audio", email = "support@roexaudio.com"}
+]
+license = {text = "MIT"}
+requires-python = ">=3.7"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Multimedia :: Sound/Audio",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "requests>=2.25.0",
+]
 
-[tool.poetry.dependencies]
-python = ">=3.7,<4.0"
-requests = "^2.25.0"
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "pytest-mock>=3.10.0",
+    "requests-mock>=1.9.3",
+]
 
-[tool.poetry.dev-dependencies]
-pytest = "^6.2.5"
-black = "^21.6b0"
-isort = "^5.9.2"
-mypy = "^0.910"
+[project.urls]
+Homepage = "https://github.com/roexaudio/roex-python"
+Documentation = "https://roex.stoplight.io/"
+Repository = "https://github.com/roexaudio/roex-python"
+"Bug Tracker" = "https://github.com/roexaudio/roex-python/issues"
+
+[tool.setuptools.packages.find]
+exclude = ["tests*", "examples*"]
