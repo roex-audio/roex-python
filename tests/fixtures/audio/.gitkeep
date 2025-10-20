@@ -1,0 +1,7 @@
+# Place test audio files here
+# 
+# For integration tests, add a file named: test_track.wav
+# Recommended specs:
+# - Duration: 10-30 seconds (for faster testing)
+# - Format: 16-bit or 24-bit WAV
+# - Sample rate: 44100 Hz or 48000 Hz

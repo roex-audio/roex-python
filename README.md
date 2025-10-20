@@ -117,15 +117,39 @@ mix_task = client.mix.create_mix_preview(mix_request)
 preview = client.mix.retrieve_preview_mix(mix_task.multitrack_task_id)
 ```
 
+## Testing
+
+This package includes a comprehensive test suite with 119 unit tests and 13 integration tests, achieving 95% code coverage.
+
+### Running Tests
+
+```bash
+# Install test dependencies
+pip install -r requirements-dev.txt
+
+# Run all unit tests
+./run_tests.sh unit
+
+# Run with coverage report
+./run_tests.sh coverage
+
+# Run integration tests (requires API key)
+export ROEX_API_KEY="your_api_key"
+./run_tests.sh integration
+```
+
+For more details, see [TESTING.md](./TESTING.md).
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
 1. Fork the repository: [https://github.com/roex-audio/roex-python](https://github.com/roex-audio/roex-python)
 2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+3. Run tests: `./run_tests.sh unit`
+4. Commit your changes (`git commit -m 'Add some amazing feature'`)
+5. Push to the branch (`git push origin feature/amazing-feature`)
+6. Open a Pull Request
 
 ## License
 

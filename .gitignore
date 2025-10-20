@@ -1,1 +1,84 @@
+# API Keys and Secrets
 token
+*.env
+.env
+.env.local
+.env.*.local
+
+# Python
+*.pyc
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Testing
+htmlcov/
+.coverage
+.coverage.*
+.pytest_cache/
+.tox/
+.nox/
+coverage.xml
+*.cover
+.hypothesis/
+
+# Test Audio Files (large files)
+tests/fixtures/audio/*.wav
+tests/fixtures/audio/*.mp3
+tests/fixtures/audio/*.flac
+tests/fixtures/audio/*.m4a
+
+# Build and Distribution
+dist/
+build/
+*.egg-info/
+.eggs/
+wheels/
+*.whl
+
+# Documentation Build
+_build/
+docs/_build/
+docs/_static/
+docs/_templates/
+
+# IDE and Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Project Specific Output
+single_masters/
+mixed_tracks/
+enhanced_tracks/
+cleaned_audio/
+analysis_results/
+album_masters/
+final_masters/
+
+# Logs
+*.log
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Test scripts with API keys
+test.sh

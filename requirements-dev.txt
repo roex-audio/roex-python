@@ -1,0 +1,15 @@
+# Testing Dependencies
+pytest>=7.0.0
+pytest-cov>=4.0.0
+pytest-mock>=3.10.0
+requests-mock>=1.9.3
+coverage>=6.0
+
+# Code Quality
+black>=22.0.0
+flake8>=5.0.0
+mypy>=0.990
+isort>=5.9.2
+
+# Optional: For recording/replaying HTTP interactions
+# vcrpy>=4.2.0
