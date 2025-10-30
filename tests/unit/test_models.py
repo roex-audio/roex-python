@@ -155,6 +155,13 @@ class TestMixingModels:
                 presence_setting=PresenceSetting.NORMAL,
                 pan_preference=PanPreference.CENTRE,
                 reverb_preference=ReverbPreference.NONE
+            ),
+            TrackData(
+                track_url="https://example.com/vocals.wav",
+                instrument_group=InstrumentGroup.VOCAL_GROUP,
+                presence_setting=PresenceSetting.LEAD,
+                pan_preference=PanPreference.CENTRE,
+                reverb_preference=ReverbPreference.NONE
             )
         ]
         
@@ -164,7 +171,7 @@ class TestMixingModels:
             return_stems=True
         )
         
-        assert len(request.track_data) == 1
+        assert len(request.track_data) == 2
         assert request.musical_style == MusicalStyle.POP
         assert request.return_stems is True
     

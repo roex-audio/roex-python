@@ -218,6 +218,8 @@ def mix_workflow(args: argparse.Namespace):
         track_data=mix_tracks,
         musical_style=MusicalStyle.ELECTRONIC,
         return_stems=True,
+        # Note: This is a test webhook URL. Replace with your own webhook endpoint
+        # or set to None if you don't need webhook notifications
         webhook_url="https://webhook-test-786984745538.europe-west1.run.app"
     )
 

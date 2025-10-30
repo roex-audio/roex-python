@@ -19,7 +19,9 @@ class RoExClient:
     Main client for interacting with the RoEx Tonn API.
 
     This client provides access to various audio processing features through dedicated controllers:
-    - `mix`: Multitrack mixing (preview, final, gain adjustments).
+    - `mix`: Multitrack mixing (preview, final, gain adjustments, advanced audio effects).
+          * Basic mixing: create_mix_preview(), retrieve_preview_mix(), retrieve_final_mix()
+          * Advanced effects: retrieve_final_mix_advanced() with EQ, compression, and panning
     - `mastering`: Audio mastering (preview, final).
     - `analysis`: Mix/master analysis.
     - `enhance`: Mix enhancement.

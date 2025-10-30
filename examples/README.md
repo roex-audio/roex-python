@@ -90,4 +90,29 @@ Here's a summary of the available examples and their usage:
         *   Use `--other` multiple times for any tracks not covered by other specific arguments.
         *   The output directory defaults to `./mixed_tracks` if `--output-dir` is not specified.
 
+*   **`advanced_mix_example.py`**: ? **NEW**
+    *   Purpose: Demonstrates advanced multitrack mixing with comprehensive audio effects including parametric EQ, dynamic compression, and stereo panning.
+    *   Features:
+        *   6-band parametric EQ with presets (bass boost, vocal clarity, kick punch, etc.)
+        *   Dynamic range compression with presets (vocal, bass, drum bus, etc.)
+        *   Stereo panning control (-60? to +60?)
+        *   Per-track gain adjustments
+        *   Master loudness control
+    *   Usage (Basic): 
+      ```bash
+      python examples/advanced_mix_example.py \
+          --bass /path/to/bass.wav \
+          --vocals /path/to/vocals.wav \
+          [--drums /path/to/drums.wav] \
+          [--output-dir ./advanced_mix_output]
+      ```
+    *   Usage (Show Examples): 
+      ```bash
+      python examples/advanced_mix_example.py --show-examples
+      ```
+    *   Notes:
+        *   `--bass` and `--vocals` arguments are required.
+        *   Demonstrates both preset-based and custom audio effects configurations.
+        *   Use `--show-examples` to see available presets and parameter ranges without making API calls.
+
 Refer to the individual script docstrings for more detailed information about each workflow.

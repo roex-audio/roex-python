@@ -16,10 +16,16 @@ from roex_python.models.common import (
 # Import mixing models
 from roex_python.models.mixing import (
     FinalMixRequest,
+    FinalMixRequestAdvanced,
     MultitrackMixRequest,
     MultitrackTaskResponse,
     TrackData,
-    TrackGainData
+    TrackGainData,
+    TrackEffectsData,
+    EQBandSettings,
+    EQSettings,
+    CompressionSettings,
+    PanningSettings
 )
 
 # Import mastering models
@@ -68,10 +74,16 @@ __all__ = [
 
     # Mixing models
     "FinalMixRequest",
+    "FinalMixRequestAdvanced",
     "MultitrackMixRequest",
     "MultitrackTaskResponse",
     "TrackData",
     "TrackGainData",
+    "TrackEffectsData",
+    "EQBandSettings",
+    "EQSettings",
+    "CompressionSettings",
+    "PanningSettings",
 
     # Mastering models
     "AlbumMasteringRequest",

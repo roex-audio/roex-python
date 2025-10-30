@@ -12,8 +12,10 @@ from roex_python.models.mixing import (
     MultitrackMixRequest,
     MultitrackTaskResponse,
     FinalMixRequest,
+    FinalMixRequestAdvanced,
     TrackData,
-    TrackGainData
+    TrackGainData,
+    TrackEffectsData
 )
 from roex_python.providers.api_provider import ApiProvider
 
@@ -95,8 +97,9 @@ class MixController:
             )
         except requests.HTTPError as e:
             # Log specific HTTP errors
-            logger.error(f"HTTP error creating mix preview: {e.response.status_code} - {e.response.text}")
-            raise Exception(f"Failed to create mix preview: {e.response.status_code} - {e.response.text}")
+            error_detail = f"{e.response.status_code} - {e.response.text}" if hasattr(e, 'response') and e.response else str(e)
+            logger.error(f"HTTP error creating mix preview: {error_detail}")
+            raise Exception(f"Failed to create mix preview: {error_detail}")
         except Exception as e:
             # Catch other potential exceptions (e.g., connection errors)
             logger.exception(f"Unexpected error creating mix preview: {e}")
@@ -205,6 +208,108 @@ class MixController:
         logger.error(f"Polling timed out for preview mix task {task_id} after {max_attempts} attempts.")
         raise Exception(f"Preview mix task {task_id} did not complete after polling for {max_attempts * poll_interval} seconds.")
 
+    def retrieve_final_mix_advanced(self, request: FinalMixRequestAdvanced) -> Dict[str, Any]:
+        """
+        Retrieve the final multitrack mix with advanced audio effects (EQ, compression, panning).
+
+        This method generates the final mix output with comprehensive audio processing
+        capabilities including parametric EQ, dynamic compression, and stereo panning.
+        It typically follows a `create_mix_preview` and `retrieve_preview_mix` sequence.
+
+        Args:
+            request (FinalMixRequestAdvanced): An object containing:
+
+                multitrack_task_id (str): The task ID from the original preview.
+
+                track_data (List[TrackEffectsData]): A list of advanced track settings
+                    including gain, EQ, compression, and panning for each track.
+
+                return_stems (bool, optional): Whether to return individual track stems
+                    along with the final mix.
+
+                create_master (bool, optional): Whether to create a mastered version of
+                    the final mix.
+
+                desired_loudness (DesiredLoudness, optional): Target loudness level
+                    (LOW, MEDIUM, HIGH). Only applicable when not creating stems.
+
+                sample_rate (str, optional): Sample rate for output ("44100" or "48000").
+
+                webhook_url (str, optional): URL for completion notifications.
+
+        Returns:
+            Dict[str, Any]: A dictionary containing the results of the final mix task.
+                The structure typically includes:
+                - 'status': The status of the final mix generation.
+                - 'download_url_mixed': URL to download the final mix audio file.
+                - 'stems': URLs to download stems (if requested).
+                - 'mix_output_settings': Applied settings.
+                Check the official RoEx API documentation for the exact structure.
+
+        Raises:
+            requests.exceptions.RequestException: If the API request fails.
+            Exception: If the API returns an error response (e.g., 4xx, 5xx status codes).
+            ValueError: If audio effects parameters are out of valid ranges.
+
+        Example:
+            >>> from roex_python.models import (
+            ...     FinalMixRequestAdvanced, TrackEffectsData,
+            ...     EQSettings, EQBandSettings, CompressionSettings, PanningSettings
+            ... )
+            >>> # Assume 'client' is an initialized RoExClient
+            >>> # Assume 'task_id' was obtained from create_mix_preview
+            >>>
+            >>> # Define advanced track effects
+            >>> bass_track = TrackEffectsData(
+            ...     track_url="https://example.com/bass.wav",
+            ...     gain_db=2.0,
+            ...     eq_settings=EQSettings.preset_bass_boost(),
+            ...     compression_settings=CompressionSettings.preset_bass(),
+            ...     panning_settings=PanningSettings.center()
+            ... )
+            >>>
+            >>> vocal_track = TrackEffectsData(
+            ...     track_url="https://example.com/vocals.wav",
+            ...     gain_db=-0.5,
+            ...     eq_settings=EQSettings.preset_vocal_clarity(),
+            ...     compression_settings=CompressionSettings.preset_vocal()
+            ... )
+            >>>
+            >>> final_mix_request = FinalMixRequestAdvanced(
+            ...     multitrack_task_id=task_id,
+            ...     track_data=[bass_track, vocal_track],
+            ...     return_stems=True,
+            ...     create_master=False
+            ... )
+            >>>
+            >>> try:
+            >>>     final_mix_results = client.mix.retrieve_final_mix_advanced(final_mix_request)
+            >>>     print(f"Final Mix Status: {final_mix_results.get('status')}")
+            >>>     print(f"Final Mix URL: {final_mix_results.get('download_url_mixed')}")
+            >>> except Exception as e:
+            >>>     print(f"Error retrieving final mix: {e}")
+
+        """
+        logger.info(f"Retrieving advanced final mix for task ID: {request.multitrack_task_id}")
+        logger.debug(f"Advanced final mix request data: {request}")
+        payload = self._prepare_advanced_final_mix_payload(request)
+
+        try:
+            response = self.api_provider.post("/retrievefinalmix", payload)
+            logger.info("Advanced final mix retrieved successfully.")
+            if "applyAudioEffectsResults" in response:
+                return response["applyAudioEffectsResults"]
+            return response
+        except requests.HTTPError as e:
+            # Log specific HTTP errors
+            error_detail = f"{e.response.status_code} - {e.response.text}" if hasattr(e, 'response') and e.response else str(e)
+            logger.error(f"HTTP error retrieving advanced final mix: {error_detail}")
+            raise Exception(f"Failed to retrieve advanced final mix: {error_detail}")
+        except Exception as e:
+            # Catch other potential exceptions
+            logger.exception(f"Unexpected error retrieving advanced final mix: {e}")
+            raise
+
     def retrieve_final_mix(self, request: FinalMixRequest) -> Dict[str, Any]:
         """
         Retrieve the final multitrack mix, potentially with gain adjustments.
@@ -276,8 +381,9 @@ class MixController:
             return response
         except requests.HTTPError as e:
             # Log specific HTTP errors
-            logger.error(f"HTTP error retrieving final mix: {e.response.status_code} - {e.response.text}")
-            raise Exception(f"Failed to retrieve final mix: {e.response.status_code} - {e.response.text}")
+            error_detail = f"{e.response.status_code} - {e.response.text}" if hasattr(e, 'response') and e.response else str(e)
+            logger.error(f"HTTP error retrieving final mix: {error_detail}")
+            raise Exception(f"Failed to retrieve final mix: {error_detail}")
         except Exception as e:
             # Catch other potential exceptions
             logger.exception(f"Unexpected error retrieving final mix: {e}")
@@ -340,3 +446,75 @@ class MixController:
                 "sampleRate": request.sample_rate
             }
         }
+
+    def _prepare_advanced_final_mix_payload(self, request: FinalMixRequestAdvanced) -> Dict[str, Any]:
+        """
+        Convert the advanced model to API payload for final mix with audio effects
+
+        Args:
+            request (FinalMixRequestAdvanced): Advanced final mix request with audio effects
+
+        Returns:
+            API payload dictionary with EQ, compression, and panning settings
+        """
+        logger.debug("Preparing advanced final mix payload with audio effects")
+        track_data = []
+        
+        for track in request.track_data:
+            track_dict = {
+                "trackURL": track.track_url,
+                "gainDb": track.gain_db
+            }
+            
+            # Add panning settings if present
+            if track.panning_settings is not None:
+                track_dict["panning_settings"] = {
+                    "panning_angle": track.panning_settings.panning_angle
+                }
+            
+            # Add EQ settings if present
+            if track.eq_settings is not None:
+                eq_dict = {}
+                for band_num in range(1, 7):
+                    band_attr = f"band_{band_num}"
+                    band = getattr(track.eq_settings, band_attr)
+                    if band is not None:
+                        eq_dict[band_attr] = {
+                            "gain": band.gain,
+                            "q": band.q,
+                            "centre_freq": band.centre_freq
+                        }
+                
+                if eq_dict:  # Only add if at least one band is configured
+                    track_dict["eq_settings"] = eq_dict
+            
+            # Add compression settings if present
+            if track.compression_settings is not None:
+                track_dict["compression_settings"] = {
+                    "threshold": track.compression_settings.threshold,
+                    "ratio": track.compression_settings.ratio,
+                    "attack_ms": track.compression_settings.attack_ms,
+                    "release_ms": track.compression_settings.release_ms
+                }
+            
+            track_data.append(track_dict)
+
+        payload = {
+            "applyAudioEffectsData": {
+                "multitrackTaskId": request.multitrack_task_id,
+                "trackData": track_data,
+                "returnStems": request.return_stems,
+                "createMaster": request.create_master,
+                "sampleRate": request.sample_rate
+            }
+        }
+        
+        # Add optional desired loudness
+        if request.desired_loudness is not None:
+            payload["applyAudioEffectsData"]["desiredLoudness"] = request.desired_loudness.value
+        
+        # Add optional webhook URL
+        if request.webhook_url is not None:
+            payload["applyAudioEffectsData"]["webhookURL"] = request.webhook_url
+        
+        return payload
