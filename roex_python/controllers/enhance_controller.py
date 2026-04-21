@@ -272,21 +272,21 @@ class EnhanceController:
             API payload dictionary
         """
         logger.debug(f"Preparing mix enhance payload for request: {request}")
-        return {
-            "mixReviveData": {
-                "audioFileLocation": request.audio_file_location,
-                "musicalStyle": request.musical_style.value,
-                "isMaster": request.is_master,
-                "fixClippingIssues": request.fix_clipping_issues,
-                "fixStereoWidthIssues": request.fix_stereo_width_issues,
-                "fixTonalProfileIssues": request.fix_tonal_profile_issues,
-                "fixLoudnessIssues": request.fix_loudness_issues,
-                "applyMastering": request.apply_mastering,
-                "applyDrumEnhancement": request.apply_drum_enhancement,
-                "applyVocalEnhancement": request.apply_vocal_enhancement,
-                "webhookURL": request.webhook_url or "",
-                "loudnessPreference": request.loudness_preference.value,
-                "stemProcessing": request.stem_processing,
-                "getProcessedStems": request.get_processed_stems
-            }
+        data = {
+            "audioFileLocation": request.audio_file_location,
+            "musicalStyle": request.musical_style.value,
+            "isMaster": request.is_master,
+            "fixClippingIssues": request.fix_clipping_issues,
+            "fixStereoWidthIssues": request.fix_stereo_width_issues,
+            "fixTonalProfileIssues": request.fix_tonal_profile_issues,
+            "fixLoudnessIssues": request.fix_loudness_issues,
+            "applyMastering": request.apply_mastering,
+            "applyDrumEnhancement": request.apply_drum_enhancement,
+            "applyVocalEnhancement": request.apply_vocal_enhancement,
+            "loudnessPreference": request.loudness_preference.value,
+            "stemProcessing": request.stem_processing,
+            "getProcessedStems": request.get_processed_stems
         }
+        if request.webhook_url is not None:
+            data["webhookURL"] = request.webhook_url
+        return {"mixReviveData": data}

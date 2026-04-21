@@ -79,19 +79,19 @@ class MasteringController:
         """
         logger.info("Creating mastering preview")
         logger.debug(f"Mastering preview request data: {request}")
-        payload = {
-            "masteringData": {
-                "trackData": [
-                    {
-                        "trackURL": request.track_url
-                    }
-                ],
-                "musicalStyle": request.musical_style.value,
-                "desiredLoudness": request.desired_loudness.value,
-                "sampleRate": request.sample_rate,
-                "webhookURL": request.webhook_url
-            }
+        data = {
+            "trackData": [
+                {
+                    "trackURL": request.track_url
+                }
+            ],
+            "musicalStyle": request.musical_style.value,
+            "desiredLoudness": request.desired_loudness.value,
+            "sampleRate": request.sample_rate,
         }
+        if request.webhook_url is not None:
+            data["webhookURL"] = request.webhook_url
+        payload = {"masteringData": data}
 
         try:
             response = self.api_provider.post("/masteringpreview", payload)

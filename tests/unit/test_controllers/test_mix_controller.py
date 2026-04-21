@@ -387,8 +387,8 @@ class TestPayloadPreparation:
         assert track["panPreference"] == "LEFT"
         assert track["reverbPreference"] == "HIGH"
     
-    def test_mix_preview_always_sends_webhook_url(self, mock_api_provider):
-        """Test that webhookURL is always present in mix preview payload, even when None"""
+    def test_mix_preview_omits_webhook_url_when_none(self, mock_api_provider):
+        """Test that webhookURL is omitted from mix preview payload when None"""
         controller = MixController(mock_api_provider)
         
         tracks = [
@@ -415,8 +415,7 @@ class TestPayloadPreparation:
         )
         
         payload = controller._prepare_mix_preview_payload(request)
-        assert "webhookURL" in payload["multitrackData"]
-        assert payload["multitrackData"]["webhookURL"] == ""
+        assert "webhookURL" not in payload["multitrackData"]
     
     def test_final_mix_payload_structure(self, mock_api_provider):
         """Test that final mix payload is correctly structured"""

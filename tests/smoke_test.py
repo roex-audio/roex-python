@@ -121,7 +121,6 @@ def main():
                 audio_file_location=track_url,
                 musical_style=EnhanceMusicalStyle.POP,
                 is_master=False,
-                webhook_url="https://webhook-test-786984745538.europe-west1.run.app",
             )
             task = client.enhance.create_mix_enhance_preview(enhance_req)
             assert task.mixrevive_task_id is not None
