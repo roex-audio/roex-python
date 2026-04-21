@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added missing `LoudnessPreference.NO_CHANGE` enum member
 - Changed `MixEnhanceRequest.loudness_preference` default from `STREAMING_LOUDNESS` to `NO_CHANGE` to match server default
 - Removed `MixEnhanceRequest.fix_drc_issues` field (not supported by server)
-- Mix preview and enhance payloads now always include `webhookURL` as a string (empty string if unset), preventing server rejection
+- `webhookURL` is now only included in payloads when explicitly provided, preventing server errors from empty strings
 - Added `tenacity` to `install_requires` / `dependencies` — was imported but missing from package metadata, causing `ModuleNotFoundError` at import time
 
 ### Added
