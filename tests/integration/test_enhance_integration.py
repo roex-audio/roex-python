@@ -5,7 +5,7 @@ Requires: ROEX_API_KEY environment variable and test audio files
 
 import pytest
 from roex_python.client import RoExClient
-from roex_python.models import MixEnhanceRequest, MusicalStyle
+from roex_python.models import MixEnhanceRequest, EnhanceMusicalStyle
 from roex_python.utils import upload_file
 
 
@@ -29,7 +29,7 @@ class TestEnhanceIntegration:
         # Create enhancement request
         enhance_request = MixEnhanceRequest(
             audio_file_location=track_url,
-            musical_style=MusicalStyle.POP,
+            musical_style=EnhanceMusicalStyle.POP,
             is_master=False,
             fix_clipping_issues=True,
             fix_loudness_issues=True,
@@ -46,7 +46,7 @@ class TestEnhanceIntegration:
         # Retrieve enhanced track (with polling)
         enhanced = client.enhance.retrieve_enhanced_track(
             task.mixrevive_task_id,
-            max_attempts=50,
+            timeout=500,
             poll_interval=10
         )
         assert enhanced is not None
