@@ -26,8 +26,9 @@ Supported Sound Sources:
 - KICK_GROUP: Kick drums and low-frequency percussion
 - SNARE_GROUP: Snare drums and mid-frequency percussion
 - VOCAL_GROUP: Lead vocals and spoken word
-- BACKING_VOCALS_GROUP: Background vocals and harmonies
+- BACKING_VOX_GROUP: Background vocals and harmonies
 - PERCS_GROUP: General percussion and drums
+- BRASS_GROUP: Brass instruments
 - STRINGS_GROUP: String instruments
 - E_GUITAR_GROUP: Electric guitars
 - ACOUSTIC_GUITAR_GROUP: Acoustic guitars

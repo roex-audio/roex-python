@@ -410,15 +410,15 @@ class MixController:
                 "reverbPreference": track.reverb_preference.value
             })
 
-        return {
-            "multitrackData": {
-                "trackData": track_data,
-                "musicalStyle": request.musical_style.value,
-                "returnStems": request.return_stems,
-                "sampleRate": request.sample_rate,
-                "webhookURL": request.webhook_url
-            }
+        data = {
+            "trackData": track_data,
+            "musicalStyle": request.musical_style.value,
+            "returnStems": request.return_stems,
+            "sampleRate": request.sample_rate,
         }
+        if request.webhook_url is not None:
+            data["webhookURL"] = request.webhook_url
+        return {"multitrackData": data}
 
     def _prepare_final_mix_payload(self, request: FinalMixRequest) -> Dict[str, Any]:
         """

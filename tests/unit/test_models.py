@@ -47,6 +47,10 @@ class TestCommonEnums:
         assert DesiredLoudness.MEDIUM.value == "MEDIUM"
         assert DesiredLoudness.HIGH.value == "HIGH"
     
+    def test_loudness_preference_no_change(self):
+        """Test LoudnessPreference enum includes NO_CHANGE"""
+        assert LoudnessPreference.NO_CHANGE.value == "NO_CHANGE"
+    
     def test_instrument_group_values(self):
         """Test InstrumentGroup enum has expected values"""
         assert InstrumentGroup.BASS_GROUP.value == "BASS_GROUP"
@@ -249,6 +253,21 @@ class TestAnalysisModels:
         assert request.audio_file_location == "https://example.com/track.wav"
         assert request.musical_style == AnalysisMusicalStyle.POP
         assert request.is_master is False
+    
+    def test_analysis_musical_style_has_mood_styles(self):
+        """Test AnalysisMusicalStyle includes all 9 mood-based styles"""
+        mood_styles = [
+            "AIRY_EXPANSIVE", "AGGRESSIVE", "BRIGHT", "GRITTY_CRUNCHY",
+            "MELLOW_SMOOTH", "SHARP_BASSY", "THUMPING_BOOMY", "WARM", "BALANCED"
+        ]
+        member_values = [m.value for m in AnalysisMusicalStyle]
+        for style in mood_styles:
+            assert style in member_values, f"{style} missing from AnalysisMusicalStyle"
+    
+    def test_analysis_musical_style_no_dance(self):
+        """Test AnalysisMusicalStyle does not include DANCE"""
+        member_names = [m.name for m in AnalysisMusicalStyle]
+        assert "DANCE" not in member_names
 
 
 class TestEnhanceModels:
@@ -265,7 +284,7 @@ class TestEnhanceModels:
         assert request.musical_style == MusicalStyle.POP
         assert request.is_master is False
         assert request.fix_clipping_issues is True
-        assert request.loudness_preference == LoudnessPreference.STREAMING_LOUDNESS
+        assert request.loudness_preference == LoudnessPreference.NO_CHANGE
     
     def test_mix_enhance_request_custom_values(self):
         """Test MixEnhanceRequest with custom values"""
@@ -274,13 +293,38 @@ class TestEnhanceModels:
             musical_style=MusicalStyle.ROCK_INDIE,
             is_master=True,
             fix_clipping_issues=False,
-            fix_drc_issues=False,
             apply_mastering=True
         )
         
         assert request.is_master is True
         assert request.fix_clipping_issues is False
         assert request.apply_mastering is True
+    
+    def test_enhance_musical_style_values(self):
+        """Test EnhanceMusicalStyle enum has all correct server values"""
+        expected = [
+            "ROCK_INDIE", "POP", "ACOUSTIC", "HIPHOP_GRIME", "ELECTRONIC",
+            "REGGAE_DUB", "ORCHESTRAL", "METAL", "OTHER", "GRITTY_CRUNCHY",
+            "BRIGHT", "WARM", "SHARP_BASSY", "THUMPING_BOOMY", "MELLOW_SMOOTH",
+            "AIRY_EXPANSIVE", "AGGRESSIVE", "BALANCED"
+        ]
+        member_values = [m.value for m in EnhanceMusicalStyle]
+        assert sorted(member_values) == sorted(expected)
+    
+    def test_mix_enhance_request_get_processed_stems(self):
+        """Test get_processed_stems defaults to False and can be set to True"""
+        request_default = MixEnhanceRequest(
+            audio_file_location="https://example.com/track.wav",
+            musical_style=MusicalStyle.POP
+        )
+        assert request_default.get_processed_stems is False
+        
+        request_enabled = MixEnhanceRequest(
+            audio_file_location="https://example.com/track.wav",
+            musical_style=MusicalStyle.POP,
+            get_processed_stems=True
+        )
+        assert request_enabled.get_processed_stems is True
     
     def test_mix_enhance_response(self):
         """Test MixEnhanceResponse creation"""
@@ -312,20 +356,29 @@ class TestAudioCleanupModels:
         assert SoundSource.VOCAL_GROUP.value == "VOCAL_GROUP"
         assert SoundSource.E_GUITAR_GROUP.value == "E_GUITAR_GROUP"
         assert SoundSource.ACOUSTIC_GUITAR_GROUP.value == "ACOUSTIC_GUITAR_GROUP"
+    
+    def test_sound_source_backing_vox(self):
+        """Test SoundSource has BACKING_VOX_GROUP (not BACKING_VOCALS_GROUP)"""
+        assert SoundSource.BACKING_VOX_GROUP.value == "BACKING_VOX_GROUP"
+        member_names = [m.name for m in SoundSource]
+        assert "BACKING_VOCALS_GROUP" not in member_names
+    
+    def test_sound_source_brass(self):
+        """Test SoundSource includes BRASS_GROUP"""
+        assert SoundSource.BRASS_GROUP.value == "BRASS_GROUP"
 
 
 @pytest.mark.unit
 class TestModelEdgeCases:
     """Test edge cases and validation"""
     
-    def test_empty_track_list_allowed(self):
-        """Test that empty track lists are allowed (validation happens at API level)"""
-        request = MultitrackMixRequest(
-            track_data=[],
-            musical_style=MusicalStyle.POP
-        )
-        
-        assert len(request.track_data) == 0
+    def test_empty_track_list_rejected(self):
+        """Test that empty track lists are rejected by validation (2-32 required)"""
+        with pytest.raises(ValueError, match="must contain between 2 and 32 tracks"):
+            MultitrackMixRequest(
+                track_data=[],
+                musical_style=MusicalStyle.POP
+            )
     
     def test_optional_webhook_url(self):
         """Test that webhook_url can be None"""

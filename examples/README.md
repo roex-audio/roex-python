@@ -48,7 +48,7 @@ Here's a summary of the available examples and their usage:
 *   **`audio_cleanup_example.py`**: 
     *   Purpose: Applies RoEx audio cleanup to a specific sound source within an audio file (WAV, FLAC).
     *   Usage: `python audio_cleanup_example.py <path_to_audio_file> <sound_source>`
-    *   Valid `<sound_source>` values: `KICK_GROUP`, `SNARE_GROUP`, `VOCAL_GROUP`, `BACKING_VOCALS_GROUP`, `PERCS_GROUP`, `STRINGS_GROUP`, `E_GUITAR_GROUP`, `ACOUSTIC_GUITAR_GROUP`
+    *   Valid `<sound_source>` values: `KICK_GROUP`, `SNARE_GROUP`, `VOCAL_GROUP`, `BACKING_VOX_GROUP`, `PERCS_GROUP`, `BRASS_GROUP`, `STRINGS_GROUP`, `E_GUITAR_GROUP`, `ACOUSTIC_GUITAR_GROUP`
 
 *   **`enhance_example.py`**: 
     *   Purpose: Enhances a single audio mix file (WAV, FLAC, MP3).

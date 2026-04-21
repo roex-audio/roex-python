@@ -69,7 +69,6 @@ class TestCreateMixEnhancePreview:
             musical_style=MusicalStyle.ROCK_INDIE,
             is_master=True,
             fix_clipping_issues=True,
-            fix_drc_issues=False,
             fix_stereo_width_issues=True,
             fix_tonal_profile_issues=True,
             fix_loudness_issues=False,
@@ -90,7 +89,6 @@ class TestCreateMixEnhancePreview:
         mix_data = payload["mixReviveData"]
         assert mix_data["isMaster"] is True
         assert mix_data["fixClippingIssues"] is True
-        assert mix_data["fixDRCIssues"] is False
         assert mix_data["applyMastering"] is True
         assert mix_data["stemProcessing"] is True
     
@@ -233,9 +231,9 @@ class TestRetrieveEnhancedTrack:
         
         controller = EnhanceController(mock_api_provider)
         
-        # Execute & Assert
-        with pytest.raises(Exception, match="Enhanced track was not available after polling"):
-            controller.retrieve_enhanced_track("enhance_task_123", max_attempts=3, poll_interval=0.1)
+        # timeout=3, poll_interval=1 -> 3 attempts
+        with pytest.raises(Exception, match="did not complete after polling"):
+            controller.retrieve_enhanced_track("enhance_task_123", timeout=3, poll_interval=1)
         
         assert mock_api_provider.post.call_count == 3
     
@@ -255,8 +253,8 @@ class TestRetrieveEnhancedTrack:
         
         controller = EnhanceController(mock_api_provider)
         
-        # Execute
-        result = controller.retrieve_enhanced_track("enhance_task_123", max_attempts=5, poll_interval=0.1)
+        # timeout=10, poll_interval=1 -> up to 10 attempts
+        result = controller.retrieve_enhanced_track("enhance_task_123", timeout=10, poll_interval=1)
         
         # Assert - should eventually succeed despite initial error
         assert result["download_url_revived"] == "https://example.com/enhanced.wav"
@@ -284,7 +282,7 @@ class TestPayloadPreparation:
         assert data["musicalStyle"] == "POP"
         assert data["isMaster"] is False
         assert data["fixClippingIssues"] is True
-        assert data["loudnessPreference"] == "STREAMING_LOUDNESS"
+        assert data["loudnessPreference"] == "NO_CHANGE"
     
     def test_payload_structure_with_custom_values(self, mock_api_provider):
         """Test payload structure with custom values"""
@@ -295,7 +293,6 @@ class TestPayloadPreparation:
             musical_style=MusicalStyle.ROCK_INDIE,
             is_master=True,
             fix_clipping_issues=False,
-            fix_drc_issues=True,
             fix_stereo_width_issues=False,
             fix_tonal_profile_issues=True,
             fix_loudness_issues=False,
@@ -311,7 +308,6 @@ class TestPayloadPreparation:
         data = payload["mixReviveData"]
         assert data["isMaster"] is True
         assert data["fixClippingIssues"] is False
-        assert data["fixDRCIssues"] is True
         assert data["fixStereoWidthIssues"] is False
         assert data["fixTonalProfileIssues"] is True
         assert data["fixLoudnessIssues"] is False
@@ -319,3 +315,33 @@ class TestPayloadPreparation:
         assert data["webhookURL"] == "https://example.com/webhook"
         assert data["loudnessPreference"] == "CD_LOUDNESS"
         assert data["stemProcessing"] is True
+    
+    def test_payload_includes_get_processed_stems(self, mock_api_provider):
+        """Test that getProcessedStems is in the payload"""
+        controller = EnhanceController(mock_api_provider)
+        
+        request_default = MixEnhanceRequest(
+            audio_file_location="https://example.com/mix.wav",
+            musical_style=MusicalStyle.POP
+        )
+        payload = controller._prepare_mix_enhance_payload(request_default)
+        assert payload["mixReviveData"]["getProcessedStems"] is False
+        
+        request_enabled = MixEnhanceRequest(
+            audio_file_location="https://example.com/mix.wav",
+            musical_style=MusicalStyle.POP,
+            get_processed_stems=True
+        )
+        payload = controller._prepare_mix_enhance_payload(request_enabled)
+        assert payload["mixReviveData"]["getProcessedStems"] is True
+    
+    def test_payload_no_fix_drc_issues(self, mock_api_provider):
+        """Test that fixDRCIssues is NOT in the payload"""
+        controller = EnhanceController(mock_api_provider)
+        
+        request = MixEnhanceRequest(
+            audio_file_location="https://example.com/mix.wav",
+            musical_style=MusicalStyle.POP
+        )
+        payload = controller._prepare_mix_enhance_payload(request)
+        assert "fixDRCIssues" not in payload["mixReviveData"]

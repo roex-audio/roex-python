@@ -234,7 +234,7 @@ cleanup_results = client.cleanup.retrieve_audio_cleanup(task.cleanup_task_id)
 print("Cleanup Results:", cleanup_results)
 ```
 
-**Available `SoundSource` options:** `KICK_GROUP`, `SNARE_GROUP`, `VOCAL_GROUP`, `BACKING_VOCALS_GROUP`, `PERCS_GROUP`, `STRINGS_GROUP`, `E_GUITAR_GROUP`, `ACOUSTIC_GUITAR_GROUP`.
+**Available `SoundSource` options:** `KICK_GROUP`, `SNARE_GROUP`, `VOCAL_GROUP`, `BACKING_VOX_GROUP`, `PERCS_GROUP`, `BRASS_GROUP`, `STRINGS_GROUP`, `E_GUITAR_GROUP`, `ACOUSTIC_GUITAR_GROUP`.
 
 **Output:** A dictionary containing status information and potentially details about the cleanup process. The primary result is often implicitly the cleaned audio accessible via a related process or understanding, though the API might provide specific output URLs depending on future implementation.
 

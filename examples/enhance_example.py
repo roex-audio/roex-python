@@ -108,7 +108,6 @@ def enhance_workflow(input_file: str = None):
         musical_style=EnhanceMusicalStyle.POP,  # Choose appropriate style
         is_master=False,  # Set to True if input is already mastered
         fix_clipping_issues=True,
-        fix_drc_issues=True,
         fix_stereo_width_issues=True,
         fix_tonal_profile_issues=True,
         fix_loudness_issues=True,

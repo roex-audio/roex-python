@@ -25,5 +25,8 @@ enhanced_tracks/
 mixed_tracks/
 single_masters/
 
+# Test artifacts
+.coverage
+
 # Other untracked files
 test.sh

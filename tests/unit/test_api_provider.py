@@ -5,6 +5,7 @@ Unit tests for ApiProvider
 import pytest
 from unittest.mock import Mock, patch, mock_open
 import requests
+from tenacity import RetryError
 from roex_python.providers.api_provider import ApiProvider
 
 
@@ -58,7 +59,7 @@ class TestApiProviderPost:
     
     @patch('roex_python.providers.api_provider.requests.post')
     def test_post_with_http_error(self, mock_post):
-        """Test POST request with HTTP error"""
+        """Test POST request with HTTP error (tenacity retries then raises RetryError)"""
         # Setup
         mock_response = Mock()
         mock_response.ok = False
@@ -72,8 +73,8 @@ class TestApiProviderPost:
             api_key="test_key"
         )
         
-        # Execute & Assert
-        with pytest.raises(requests.HTTPError):
+        # Execute & Assert - tenacity wraps the error in RetryError after exhausting retries
+        with pytest.raises((requests.HTTPError, RetryError)):
             provider.post("/notfound", {"data": "value"})
     
     @patch('roex_python.providers.api_provider.requests.post')
@@ -101,7 +102,7 @@ class TestApiProviderPost:
     
     @patch('roex_python.providers.api_provider.requests.post')
     def test_post_with_connection_error(self, mock_post):
-        """Test POST request with connection error"""
+        """Test POST request with connection error (tenacity retries then raises RetryError)"""
         # Setup
         mock_post.side_effect = requests.exceptions.ConnectionError("Connection failed")
         
@@ -110,8 +111,8 @@ class TestApiProviderPost:
             api_key="test_key"
         )
         
-        # Execute & Assert
-        with pytest.raises(requests.exceptions.ConnectionError):
+        # Execute & Assert - tenacity wraps the error in RetryError after exhausting retries
+        with pytest.raises((requests.exceptions.ConnectionError, RetryError)):
             provider.post("/test", {"data": "value"})
     
     @patch('roex_python.providers.api_provider.requests.post')
@@ -170,7 +171,7 @@ class TestApiProviderGet:
     
     @patch('roex_python.providers.api_provider.requests.get')
     def test_get_with_http_error(self, mock_get):
-        """Test GET request with HTTP error"""
+        """Test GET request with HTTP error (tenacity retries then raises RetryError)"""
         # Setup
         mock_response = Mock()
         mock_response.ok = False
@@ -184,8 +185,8 @@ class TestApiProviderGet:
             api_key="test_key"
         )
         
-        # Execute & Assert
-        with pytest.raises(requests.HTTPError):
+        # Execute & Assert - tenacity wraps the error in RetryError after exhausting retries
+        with pytest.raises((requests.HTTPError, RetryError)):
             provider.get("/error")
     
     @patch('roex_python.providers.api_provider.requests.get')
