@@ -220,11 +220,12 @@ class TestCleanUpAudio:
             SoundSource.KICK_GROUP,
             SoundSource.SNARE_GROUP,
             SoundSource.VOCAL_GROUP,
-            SoundSource.BACKING_VOCALS_GROUP,
+            SoundSource.BACKING_VOX_GROUP,
             SoundSource.PERCS_GROUP,
             SoundSource.STRINGS_GROUP,
             SoundSource.E_GUITAR_GROUP,
-            SoundSource.ACOUSTIC_GUITAR_GROUP
+            SoundSource.ACOUSTIC_GUITAR_GROUP,
+            SoundSource.BRASS_GROUP
         ]
         
         for source in all_sources:

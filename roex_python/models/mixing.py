@@ -64,7 +64,7 @@ class MultitrackMixRequest:
     sample_rate: str = "44100"
     """str: The desired sample rate for the output mix and stems. Defaults to "44100" Hz."""
     webhook_url: Optional[str] = None
-    """Optional[str]: A URL to which a notification will be sent upon task completion."""
+    """Optional[str]: A URL to which a notification will be sent upon task completion. Required by the API (empty string is sent if None)."""
 
     def __post_init__(self):
         """Validate track count is within API limits."""

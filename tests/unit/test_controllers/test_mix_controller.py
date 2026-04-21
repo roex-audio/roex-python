@@ -387,6 +387,37 @@ class TestPayloadPreparation:
         assert track["panPreference"] == "LEFT"
         assert track["reverbPreference"] == "HIGH"
     
+    def test_mix_preview_always_sends_webhook_url(self, mock_api_provider):
+        """Test that webhookURL is always present in mix preview payload, even when None"""
+        controller = MixController(mock_api_provider)
+        
+        tracks = [
+            TrackData(
+                track_url="https://example.com/track1.wav",
+                instrument_group=InstrumentGroup.BASS_GROUP,
+                presence_setting=PresenceSetting.NORMAL,
+                pan_preference=PanPreference.CENTRE,
+                reverb_preference=ReverbPreference.NONE
+            ),
+            TrackData(
+                track_url="https://example.com/track2.wav",
+                instrument_group=InstrumentGroup.VOCAL_GROUP,
+                presence_setting=PresenceSetting.LEAD,
+                pan_preference=PanPreference.CENTRE,
+                reverb_preference=ReverbPreference.NONE
+            )
+        ]
+        
+        request = MultitrackMixRequest(
+            track_data=tracks,
+            musical_style=MusicalStyle.POP,
+            webhook_url=None
+        )
+        
+        payload = controller._prepare_mix_preview_payload(request)
+        assert "webhookURL" in payload["multitrackData"]
+        assert payload["multitrackData"]["webhookURL"] == ""
+    
     def test_final_mix_payload_structure(self, mock_api_provider):
         """Test that final mix payload is correctly structured"""
         controller = MixController(mock_api_provider)

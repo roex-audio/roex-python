@@ -416,7 +416,7 @@ class MixController:
                 "musicalStyle": request.musical_style.value,
                 "returnStems": request.return_stems,
                 "sampleRate": request.sample_rate,
-                "webhookURL": request.webhook_url
+                "webhookURL": request.webhook_url or ""
             }
         }
 

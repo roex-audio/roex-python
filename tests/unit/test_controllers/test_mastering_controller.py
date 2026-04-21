@@ -156,7 +156,7 @@ class TestRetrievePreviewMaster:
         controller = MasteringController(mock_api_provider)
         
         # Execute & Assert
-        with pytest.raises(Exception, match="Preview master was not available after polling"):
+        with pytest.raises(Exception, match="did not complete after polling"):
             controller.retrieve_preview_master("task_123", max_attempts=3, poll_interval=0.1)
         
         # Should have tried: 1 initial + 3 polling attempts = 4 total

@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="roex_python",
-    version="1.3.0",
+    version="1.3.1",
     author="RoEx Audio",
     author_email="support@roexaudio.com",
     description="Pip package for the RoEx Tonn API",
@@ -36,6 +36,7 @@ setup(
     python_requires=">=3.7",
     install_requires=[
         "requests>=2.25.0",
+        "tenacity>=8.0.0",
     ],
     extras_require={
         "dev": [

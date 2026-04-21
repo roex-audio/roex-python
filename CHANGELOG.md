@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1] - 2026-04-21
+
+### Fixed
+- Aligned `EnhanceMusicalStyle` enum with server — replaced incorrect values with 18 correct styles (e.g. `ROCK_INDIE`, `GRITTY_CRUNCHY`, `BALANCED`)
+- Aligned `AnalysisMusicalStyle` enum with server — removed `DANCE`, added 9 mood-based styles (`AIRY_EXPANSIVE`, `AGGRESSIVE`, `BRIGHT`, etc.)
+- Renamed `SoundSource.BACKING_VOCALS_GROUP` to `BACKING_VOX_GROUP` to match server
+- Added missing `SoundSource.BRASS_GROUP` enum member
+- Added missing `LoudnessPreference.NO_CHANGE` enum member
+- Changed `MixEnhanceRequest.loudness_preference` default from `STREAMING_LOUDNESS` to `NO_CHANGE` to match server default
+- Removed `MixEnhanceRequest.fix_drc_issues` field (not supported by server)
+- Mix preview and enhance payloads now always include `webhookURL` as a string (empty string if unset), preventing server rejection
+- Added `tenacity` to `install_requires` / `dependencies` — was imported but missing from package metadata, causing `ModuleNotFoundError` at import time
+
+### Added
+- `MixEnhanceRequest.get_processed_stems` field for requesting separated stems from enhancement
+- `MixEnhanceRequest.apply_drum_enhancement` and `apply_vocal_enhancement` fields (required by server)
+
+### Changed
+- Updated examples, docstrings, and README to reflect all model and enum changes
+
 ## [1.3.0] - 2025-10-30
 
 ### Added
@@ -83,6 +103,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Asynchronous task polling
 - Secure file upload/download
 
+[1.3.1]: https://github.com/roexaudio/roex-python/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/roexaudio/roex-python/compare/v1.2.1...v1.3.0
 [1.2.1]: https://github.com/roexaudio/roex-python/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/roexaudio/roex-python/compare/v1.1.1...v1.2.0

@@ -33,8 +33,8 @@ class AudioCleanupController:
         The operation is synchronous and returns the results directly.
 
         Supported Sound Sources (SoundSource Enum):
-            KICK_GROUP, SNARE_GROUP, VOCAL_GROUP, BACKING_VOCALS_GROUP,
-            PERCS_GROUP, STRINGS_GROUP, E_GUITAR_GROUP, ACOUSTIC_GUITAR_GROUP
+            KICK_GROUP, SNARE_GROUP, VOCAL_GROUP, BACKING_VOX_GROUP,
+            PERCS_GROUP, BRASS_GROUP, STRINGS_GROUP, E_GUITAR_GROUP, ACOUSTIC_GUITAR_GROUP
 
         Supported File Formats: WAV, FLAC
 

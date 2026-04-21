@@ -131,3 +131,4 @@ class LoudnessPreference(Enum):
     """
     CD_LOUDNESS = "CD_LOUDNESS"
     STREAMING_LOUDNESS = "STREAMING_LOUDNESS"
+    NO_CHANGE = "NO_CHANGE"

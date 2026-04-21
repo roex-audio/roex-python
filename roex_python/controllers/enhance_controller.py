@@ -138,7 +138,7 @@ class EnhanceController:
             >>> # Assume 'client' is an initialized RoExClient
             >>> enhance_req = MixEnhanceRequest(
             ...     audio_file_location="https://example.com/my_final_mix.wav",
-            ...     musical_style=EnhanceMusicalStyle.ROCK,
+            ...     musical_style=EnhanceMusicalStyle.ROCK_INDIE,
             ...     apply_mastering=True,
             ...     stem_processing=True # Request stems along with the enhanced mix
             ... )
@@ -278,13 +278,15 @@ class EnhanceController:
                 "musicalStyle": request.musical_style.value,
                 "isMaster": request.is_master,
                 "fixClippingIssues": request.fix_clipping_issues,
-                "fixDRCIssues": request.fix_drc_issues,
                 "fixStereoWidthIssues": request.fix_stereo_width_issues,
                 "fixTonalProfileIssues": request.fix_tonal_profile_issues,
                 "fixLoudnessIssues": request.fix_loudness_issues,
                 "applyMastering": request.apply_mastering,
-                "webhookURL": request.webhook_url,
+                "applyDrumEnhancement": request.apply_drum_enhancement,
+                "applyVocalEnhancement": request.apply_vocal_enhancement,
+                "webhookURL": request.webhook_url or "",
                 "loudnessPreference": request.loudness_preference.value,
-                "stemProcessing": request.stem_processing
+                "stemProcessing": request.stem_processing,
+                "getProcessedStems": request.get_processed_stems
             }
         }
