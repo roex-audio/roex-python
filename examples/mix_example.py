@@ -247,8 +247,8 @@ def mix_workflow(args: argparse.Namespace):
         logger.error(f"Error retrieving mix preview: {e}")
         return
 
-    preview_download_url = preview_results.get('download_url_preview_mixed')
-    fx_settings = preview_results.get('mix_output_settings') # Capture FX settings
+    preview_download_url = preview_results.download_url_preview_mixed
+    fx_settings = preview_results.mix_output_settings
 
     if preview_download_url:
         logger.info(f"Preview mix ready: {preview_download_url}")

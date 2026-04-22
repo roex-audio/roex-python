@@ -65,13 +65,13 @@ def print_analysis_results(results):
     """Pretty print the analysis results from the mix analysis endpoint.
     
     Args:
-        results: Dictionary containing the analysis results from the API
+        results: AnalysisResult from the API
     """
-    if not results or "payload" not in results:
+    if not results or not results.payload:
         logger.error("No payload data found in analysis results.")
         return
 
-    payload = results["payload"]
+    payload = results.payload
 
     print("\n==== Mix Analysis Results ====")
     print(f"Integrated Loudness: {payload.get('integrated_loudness_lufs', 'N/A')} LUFS")
@@ -205,15 +205,15 @@ def analysis_workflow(input_file: str, compare_file: str = None):
     )
     try:
         analysis_results = client.analysis.analyze_mix(analysis_request)
-        if not analysis_results or analysis_results.get("error"): # Basic error check
-             logger.error(f"Error analyzing mix: {analysis_results.get('message', 'Unknown API error')}")
-             # Continue to comparison if possible, but don't save analysis results
+        if not analysis_results or analysis_results.error:
+             logger.error(f"Error analyzing mix: {analysis_results.info if analysis_results else 'Unknown API error'}")
         else:
             print_analysis_results(analysis_results)
             analysis_output_path = output_dir / f"analysis_{file_path_a.stem}.json"
             try:
+                from dataclasses import asdict
                 with open(analysis_output_path, "w") as f:
-                    json.dump(analysis_results, f, indent=2)
+                    json.dump(asdict(analysis_results), f, indent=2)
                 logger.info(f"\nAnalysis results saved to {analysis_output_path}")
             except IOError as e:
                 logger.error(f"Error saving analysis results: {e}")

@@ -5,6 +5,7 @@ Models for the mastering-related API endpoints
 from dataclasses import dataclass, field
 from typing import List, Optional
 
+
 from roex_python.models.common import DesiredLoudness, MusicalStyle
 
 
@@ -51,3 +52,19 @@ class AlbumMasteringRequest:
     """
     tracks: List[MasteringRequest]
     """List[MasteringRequest]: A list of individual MasteringRequest objects, one for each track to be mastered."""
+
+
+@dataclass
+class PreviewMasterResult:
+    """Result of a completed mastering preview from the ``/retrievepreviewmaster`` endpoint."""
+    download_url_mastered_preview: Optional[str] = None
+    """Optional[str]: Signed URL for the mastered preview audio file."""
+    preview_start_time: Optional[float] = None
+    """Optional[float]: Offset in seconds where the preview clip starts in the original track."""
+
+
+@dataclass
+class FinalMasterResult:
+    """Result of a completed final master from the ``/retrievefinalmaster`` endpoint."""
+    download_url_mastered: Optional[str] = None
+    """Optional[str]: Signed URL for the final mastered audio file."""

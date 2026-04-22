@@ -7,7 +7,8 @@ from unittest.mock import Mock, patch
 import requests
 from roex_python.controllers.enhance_controller import EnhanceController
 from roex_python.models import (
-    MixEnhanceRequest, MixEnhanceResponse, MusicalStyle, LoudnessPreference
+    MixEnhanceRequest, MixEnhanceResponse, EnhancedTrackResult,
+    MusicalStyle, LoudnessPreference
 )
 
 
@@ -164,74 +165,53 @@ class TestRetrieveEnhancedTrack:
     @patch('roex_python.controllers.enhance_controller.time.sleep')
     def test_successful_retrieval(self, mock_sleep, mock_api_provider):
         """Test successful enhanced track retrieval"""
-        # Setup
         mock_api_provider.post.return_value = {
             "error": False,
-            "revived_track_tasks_results": {
-                "download_url_revived": "https://example.com/enhanced.wav"
+            "revivedTrackTaskResults": {
+                "download_url_revived": "https://example.com/enhanced.wav",
+                "download_url_preview_revived": "https://example.com/preview.mp3",
+                "stems": {"vocal": "https://example.com/vocal.wav"},
+                "preview_start_time": 30.0
             }
         }
         
         controller = EnhanceController(mock_api_provider)
-        
-        # Execute
         result = controller.retrieve_enhanced_track("enhance_task_123")
         
-        # Assert
-        assert result["download_url_revived"] == "https://example.com/enhanced.wav"
+        assert isinstance(result, EnhancedTrackResult)
+        assert result.download_url_revived == "https://example.com/enhanced.wav"
+        assert result.download_url_preview_revived == "https://example.com/preview.mp3"
+        assert result.stems == {"vocal": "https://example.com/vocal.wav"}
+        assert result.preview_start_time == 30.0
     
     @patch('roex_python.controllers.enhance_controller.time.sleep')
     def test_polling_until_ready(self, mock_sleep, mock_api_provider):
         """Test polling until enhanced track is ready"""
-        # Setup - first calls return error, last returns result
         mock_api_provider.post.side_effect = [
             {"error": True},
             {"error": True},
             {
                 "error": False,
-                "revived_track_tasks_results": {
+                "revivedTrackTaskResults": {
                     "download_url_revived": "https://example.com/enhanced.wav"
                 }
             }
         ]
         
         controller = EnhanceController(mock_api_provider)
-        
-        # Execute
         result = controller.retrieve_enhanced_track("enhance_task_123", poll_interval=1)
         
-        # Assert
-        assert result["download_url_revived"] == "https://example.com/enhanced.wav"
+        assert isinstance(result, EnhancedTrackResult)
+        assert result.download_url_revived == "https://example.com/enhanced.wav"
         assert mock_api_provider.post.call_count == 3
-    
-    @patch('roex_python.controllers.enhance_controller.time.sleep')
-    def test_alternate_response_format(self, mock_sleep, mock_api_provider):
-        """Test handling of alternate response format"""
-        # Setup - response in different format
-        mock_api_provider.post.return_value = {
-            "error": False,
-            "track_results": {
-                "download_url_preview_revived": "https://example.com/preview_enhanced.wav"
-            }
-        }
-        
-        controller = EnhanceController(mock_api_provider)
-        
-        # Execute
-        result = controller.retrieve_enhanced_track("enhance_task_123")
-        
-        # Assert - should find the download URL in nested structure
-        assert "download_url_preview_revived" in result
     
     @patch('roex_python.controllers.enhance_controller.time.sleep')
     def test_polling_timeout(self, mock_sleep, mock_api_provider):
         """Test polling timeout after max attempts"""
-        # Setup - always return error
         mock_api_provider.post.return_value = {"error": True}
         
         controller = EnhanceController(mock_api_provider)
         
-        # timeout=3, poll_interval=1 -> 3 attempts
         with pytest.raises(Exception, match="did not complete after polling"):
             controller.retrieve_enhanced_track("enhance_task_123", timeout=3, poll_interval=1)
         
@@ -240,24 +220,21 @@ class TestRetrieveEnhancedTrack:
     @patch('roex_python.controllers.enhance_controller.time.sleep')
     def test_http_error_continues_polling(self, mock_sleep, mock_api_provider):
         """Test that HTTP errors don't stop polling"""
-        # Setup - first call errors, second succeeds
         mock_api_provider.post.side_effect = [
             requests.HTTPError("Temporary error"),
             {
                 "error": False,
-                "revived_track_tasks_results": {
+                "revivedTrackTaskResults": {
                     "download_url_revived": "https://example.com/enhanced.wav"
                 }
             }
         ]
         
         controller = EnhanceController(mock_api_provider)
-        
-        # timeout=10, poll_interval=1 -> up to 10 attempts
         result = controller.retrieve_enhanced_track("enhance_task_123", timeout=10, poll_interval=1)
         
-        # Assert - should eventually succeed despite initial error
-        assert result["download_url_revived"] == "https://example.com/enhanced.wav"
+        assert isinstance(result, EnhancedTrackResult)
+        assert result.download_url_revived == "https://example.com/enhanced.wav"
 
 
 @pytest.mark.unit

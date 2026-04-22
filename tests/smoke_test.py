@@ -1,5 +1,5 @@
 """
-Smoke test for roex-python SDK v1.3.1
+Smoke test for roex-python SDK v1.3.2
 Validates that models, enums, and payloads are accepted by the live API.
 Run: ROEX_API_KEY=<key> python -m tests.smoke_test
 """
@@ -28,7 +28,7 @@ def main():
         )
         from roex_python.utils import upload_file
         import roex_python
-        assert roex_python.__version__ == "1.3.1"
+        assert roex_python.__version__ == "1.3.2"
         print(f"OK (v{roex_python.__version__})")
     except Exception as e:
         print(f"FAIL: {e}")
@@ -106,7 +106,8 @@ def main():
             )
             results = client.analysis.analyze_mix(request)
             assert results is not None
-            print(f"OK (keys: {list(results.keys()) if isinstance(results, dict) else 'non-dict'})")
+            assert results.payload is not None
+            print(f"OK (payload keys: {list(results.payload.keys())})")
         except Exception as e:
             print(f"FAIL: {e}")
             failures.append(("Analysis", e))

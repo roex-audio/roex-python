@@ -4,6 +4,7 @@ Models for the mix/master analysis API endpoints
 
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any, Dict, Optional
 
 
 class AnalysisMusicalStyle(Enum):
@@ -62,3 +63,21 @@ class MixAnalysisRequest:
     """AnalysisMusicalStyle: The musical style of the track, used as a reference for the analysis (e.g., ROCK, POP, ELECTRONIC)."""
     is_master: bool
     """bool: Indicates whether the provided audio file is a mastered track (True) or a mix (False)."""
+
+
+@dataclass
+class AnalysisResult:
+    """Result of a mix/master analysis from the ``/mixanalysis`` endpoint.
+
+    The ``payload`` dict contains the detailed diagnosis metrics such as
+    ``integrated_loudness_lufs``, ``peak_loudness_dbfs``, ``tonal_profile``,
+    ``clipping``, ``stereo_field``, etc.
+    """
+    payload: Optional[Dict[str, Any]] = None
+    """Optional[Dict[str, Any]]: The diagnosis metrics dictionary."""
+    error: bool = False
+    """bool: Whether the analysis encountered an error."""
+    info: str = ""
+    """str: Additional information from the API."""
+    completion_time: str = ""
+    """str: Timestamp when the analysis completed."""

@@ -31,14 +31,12 @@ class TestAnalysisIntegration:
         
         results = client.analysis.analyze_mix(request)
         
-        # Verify results contain expected metrics
-        assert "payload" in results or isinstance(results, dict)
-        print(f"Analysis results keys: {results.keys()}")
+        assert results is not None
+        assert results.payload is not None
+        print(f"Analysis payload keys: {list(results.payload.keys())}")
         
-        # Check for common analysis fields
-        payload = results.get("payload", results)
-        if "integrated_loudness_lufs" in payload:
-            print(f"Integrated loudness: {payload['integrated_loudness_lufs']} LUFS")
+        if "integrated_loudness_lufs" in results.payload:
+            print(f"Integrated loudness: {results.payload['integrated_loudness_lufs']} LUFS")
     
     def test_compare_two_mixes(self, requires_api_key, integration_audio_file):
         """Test comparing two mixes"""

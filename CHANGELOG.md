@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.2] - 2026-04-21
+
+### Fixed
+- Fixed `retrieve_enhanced_track` using wrong response key `revived_track_tasks_results` (snake_case) — now correctly reads `revivedTrackTaskResults` (camelCase) from the server response
+- Rewrote inaccurate docstrings across all retrieval methods to reflect actual server response shapes
+
+### Added
+- Typed response dataclasses for all retrieval endpoints, replacing raw `dict` returns:
+  - `EnhancedTrackResult` — fields: `download_url_preview_revived`, `download_url_revived`, `stems`, `preview_start_time`
+  - `PreviewMixResult` — fields: `download_url_preview_mixed`, `stems`, `mix_output_settings`, `status`
+  - `FinalMixResult` — fields: `download_url_mixed`, `stems`, `mix_output_settings`
+  - `PreviewMasterResult` — fields: `download_url_mastered_preview`, `preview_start_time`
+  - `FinalMasterResult` — fields: `download_url_mastered`
+  - `AnalysisResult` — fields: `payload`, `error`, `info`, `completion_time`
+- All new response types are exported from `roex_python.models`
+
+### Changed
+- `retrieve_enhanced_track` now returns `EnhancedTrackResult` instead of `dict`
+- `retrieve_preview_mix` now returns `PreviewMixResult` instead of `Dict`
+- `retrieve_final_mix` and `retrieve_final_mix_advanced` now return `FinalMixResult` instead of `Dict`
+- `retrieve_preview_master` now returns `PreviewMasterResult` instead of `Dict`
+- `retrieve_final_master` now returns `FinalMasterResult` instead of `Dict`
+- `analyze_mix` now returns `AnalysisResult` instead of `Dict`
+
 ## [1.3.1] - 2026-04-21
 
 ### Fixed
@@ -103,6 +127,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Asynchronous task polling
 - Secure file upload/download
 
+[1.3.2]: https://github.com/roexaudio/roex-python/compare/v1.3.1...v1.3.2
 [1.3.1]: https://github.com/roexaudio/roex-python/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/roexaudio/roex-python/compare/v1.2.1...v1.3.0
 [1.2.1]: https://github.com/roexaudio/roex-python/compare/v1.2.0...v1.2.1

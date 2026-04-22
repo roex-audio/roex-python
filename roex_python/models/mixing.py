@@ -3,7 +3,7 @@ Models for the mixing-related API endpoints
 """
 
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from roex_python.models.common import (
     DesiredLoudness,
@@ -408,3 +408,27 @@ class FinalMixRequestAdvanced:
     """str: The desired sample rate for the output. "44100" for 44.1kHz (16-bit) or "48000" for 48kHz (24-bit). Defaults to "44100"."""
     webhook_url: Optional[str] = None
     """Optional[str]: A URL to which a notification will be sent upon task completion."""
+
+
+@dataclass
+class PreviewMixResult:
+    """Result of a completed mix preview from the ``/retrievepreviewmix`` endpoint."""
+    download_url_preview_mixed: Optional[str] = None
+    """Optional[str]: Signed URL for the preview mix audio file."""
+    stems: Optional[Dict[str, str]] = None
+    """Optional[Dict[str, str]]: URLs keyed by stem name, if stems were requested."""
+    mix_output_settings: Optional[Dict[str, Any]] = None
+    """Optional[Dict[str, Any]]: The mixing settings applied (gain, pan, etc.)."""
+    status: Optional[str] = None
+    """Optional[str]: Task status (e.g. ``MIX_TASK_PREVIEW_COMPLETED``)."""
+
+
+@dataclass
+class FinalMixResult:
+    """Result of a completed final mix from the ``/retrievefinalmix`` endpoint."""
+    download_url_mixed: Optional[str] = None
+    """Optional[str]: Signed URL for the final mix audio file."""
+    stems: Optional[Dict[str, str]] = None
+    """Optional[Dict[str, str]]: URLs keyed by stem name, if stems were requested."""
+    mix_output_settings: Optional[Dict[str, Any]] = None
+    """Optional[Dict[str, Any]]: The mixing settings applied."""

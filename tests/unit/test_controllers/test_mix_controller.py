@@ -9,8 +9,8 @@ from roex_python.controllers.mix_controller import MixController
 from roex_python.models import (
     MultitrackMixRequest, TrackData, InstrumentGroup,
     PresenceSetting, PanPreference, ReverbPreference,
-    MusicalStyle, FinalMixRequest, TrackGainData,
-    MultitrackTaskResponse, FinalMixRequestAdvanced,
+    MusicalStyle, FinalMixRequest, FinalMixResult, TrackGainData,
+    MultitrackTaskResponse, PreviewMixResult, FinalMixRequestAdvanced,
     TrackEffectsData, EQSettings, EQBandSettings,
     CompressionSettings, PanningSettings, DesiredLoudness
 )
@@ -161,46 +161,42 @@ class TestRetrievePreviewMix:
     
     def test_immediate_success(self, mock_api_provider):
         """Test when preview is immediately available"""
-        # Setup
         mock_api_provider.post.return_value = {
             "previewMixTaskResults": {
-                "download_url_preview_mix": "https://example.com/preview.wav",
-                "status": "MIX_TASK_PREVIEW_COMPLETED"
+                "download_url_preview_mixed": "https://example.com/preview.wav",
+                "status": "MIX_TASK_PREVIEW_COMPLETED",
+                "stems": {"vocal": "https://example.com/vocal.wav"},
+                "mix_output_settings": {"gain": 1.0}
             },
             "status": "MIX_TASK_PREVIEW_COMPLETED"
         }
         
         controller = MixController(mock_api_provider)
-        
-        # Execute
         result = controller.retrieve_preview_mix("mix_task_123")
         
-        # Assert
-        assert result["download_url_preview_mix"] == "https://example.com/preview.wav"
-        assert result["status"] == "MIX_TASK_PREVIEW_COMPLETED"
+        assert isinstance(result, PreviewMixResult)
+        assert result.download_url_preview_mixed == "https://example.com/preview.wav"
+        assert result.status == "MIX_TASK_PREVIEW_COMPLETED"
     
     @patch('roex_python.controllers.mix_controller.time.sleep')
     def test_polling_until_ready(self, mock_sleep, mock_api_provider):
         """Test polling until preview is ready"""
-        # Setup - first calls return pending, last returns result
         mock_api_provider.post.side_effect = [
             requests.HTTPError("Not ready"),
             {"status": "PROCESSING"},
             {
                 "previewMixTaskResults": {
-                    "download_url_preview_mix": "https://example.com/preview.wav",
+                    "download_url_preview_mixed": "https://example.com/preview.wav",
                     "status": "MIX_TASK_PREVIEW_COMPLETED"
                 }
             }
         ]
         
         controller = MixController(mock_api_provider)
-        
-        # Execute
         result = controller.retrieve_preview_mix("mix_task_123", poll_interval=1)
         
-        # Assert
-        assert result["download_url_preview_mix"] == "https://example.com/preview.wav"
+        assert isinstance(result, PreviewMixResult)
+        assert result.download_url_preview_mixed == "https://example.com/preview.wav"
         assert mock_api_provider.post.call_count == 3
     
     @patch('roex_python.controllers.mix_controller.time.sleep')
@@ -225,25 +221,21 @@ class TestRetrievePreviewMix:
     
     def test_with_fx_settings(self, mock_api_provider):
         """Test retrieving preview with FX settings"""
-        # Setup
         mock_api_provider.post.return_value = {
             "previewMixTaskResults": {
-                "download_url_preview_mix": "https://example.com/preview.wav",
-                "fx_settings": {"compression": "moderate"},
+                "download_url_preview_mixed": "https://example.com/preview.wav",
+                "mix_output_settings": {"compression": "moderate"},
                 "status": "MIX_TASK_PREVIEW_COMPLETED"
             },
             "status": "MIX_TASK_PREVIEW_COMPLETED"
         }
         
         controller = MixController(mock_api_provider)
-        
-        # Execute
         result = controller.retrieve_preview_mix("mix_task_123", retrieve_fx_settings=True)
         
-        # Assert
-        assert "fx_settings" in result
+        assert isinstance(result, PreviewMixResult)
+        assert result.mix_output_settings == {"compression": "moderate"}
         
-        # Verify retrieveFXSettings was passed
         payload = mock_api_provider.post.call_args[0][1]
         assert payload["multitrackData"]["retrieveFXSettings"] is True
 
@@ -254,10 +246,11 @@ class TestRetrieveFinalMix:
     
     def test_successful_retrieval(self, mock_api_provider):
         """Test successful final mix retrieval"""
-        # Setup
         mock_api_provider.post.return_value = {
             "applyAudioEffectsResults": {
-                "download_url_final_mix": "https://example.com/final.wav"
+                "download_url_mixed": "https://example.com/final.wav",
+                "stems": {"vocal": "https://example.com/vocal.wav"},
+                "mix_output_settings": {"gain": 2.5}
             }
         }
         
@@ -275,11 +268,10 @@ class TestRetrieveFinalMix:
             track_data=track_data
         )
         
-        # Execute
         result = controller.retrieve_final_mix(request)
         
-        # Assert
-        assert result["download_url_final_mix"] == "https://example.com/final.wav"
+        assert isinstance(result, FinalMixResult)
+        assert result.download_url_mixed == "https://example.com/final.wav"
     
     def test_with_multiple_tracks_and_gains(self, mock_api_provider):
         """Test final mix with multiple tracks and gain adjustments"""
@@ -703,11 +695,10 @@ class TestRetrieveFinalMixAdvanced:
             webhook_url="https://example.com/webhook"
         )
         
-        # Execute
         result = controller.retrieve_final_mix_advanced(request)
         
-        # Assert
-        assert result["download_url_mixed"] == "https://example.com/final_advanced.wav"
+        assert isinstance(result, FinalMixResult)
+        assert result.download_url_mixed == "https://example.com/final_advanced.wav"
         
         # Verify payload structure
         payload = mock_api_provider.post.call_args[0][1]

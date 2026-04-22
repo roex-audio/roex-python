@@ -9,7 +9,7 @@ import logging
 
 import requests
 
-from roex_python.models.enhance import MixEnhanceRequest, MixEnhanceResponse
+from roex_python.models.enhance import EnhancedTrackResult, MixEnhanceRequest, MixEnhanceResponse
 from roex_python.providers.api_provider import ApiProvider
 
 # Initialize logger for this module
@@ -172,56 +172,38 @@ class EnhanceController:
             logger.exception(f"Unexpected error creating mix enhance: {e}")
             raise
 
-    def retrieve_enhanced_track(self, task_id: str, poll_interval: int = 5, timeout: int = 600) -> dict:
+    def retrieve_enhanced_track(self, task_id: str, poll_interval: int = 5, timeout: int = 600) -> EnhancedTrackResult:
         """
         Retrieve the results of a mix enhancement task (preview or full).
 
-        This method polls the RoEx API's task status endpoint using the provided
-        `task_id`. It waits for the task to complete or until the `timeout` is reached.
+        Polls the ``/retrieveenhancedtrack`` endpoint until results are ready
+        or the *timeout* is reached.
 
         Args:
             task_id (str): The unique ID of the enhancement task (obtained from
-                `create_mix_enhance_preview` or `create_mix_enhance`).
+                ``create_mix_enhance_preview`` or ``create_mix_enhance``).
             poll_interval (int): Seconds to wait between status checks. Defaults to 5.
             timeout (int): Maximum seconds to wait for task completion. Defaults to 600 (10 minutes).
 
         Returns:
-            dict: A dictionary containing the task results. The structure includes:
-                - `status` (str): Final status ('completed', 'failed', etc.).
-                - `results` (dict): Contains details upon completion:
-                    - `preview_audio_file_location` (Optional[str]): URL for preview audio.
-                    - `enhanced_audio_file_location` (Optional[str]): URL for full enhanced audio.
-                    - `stems` (Optional[dict]): If `stem_processing` was True in the request,
-                      this dictionary contains URLs for individual stems (e.g., `vocals`, `bass`, `drums`, `other`).
-                    - `processing_time` (float): Time taken for processing.
-                    - `error_message` (Optional[str]): Error details if the task failed.
-                - Other task metadata.
+            EnhancedTrackResult: A typed result containing:
+                - ``download_url_preview_revived`` (Optional[str]): Signed URL for the MP3 preview.
+                - ``download_url_revived`` (Optional[str]): Signed URL for the full WAV file.
+                - ``stems`` (Optional[Dict[str, str]]): URLs keyed by stem name
+                  (``vocal``, ``bass``, ``drums``, ``other``) when stem processing was requested.
+                - ``preview_start_time`` (Optional[float]): Offset in seconds where
+                  the preview clip begins in the original track.
 
         Raises:
-            TimeoutError: If the task does not complete within the specified `timeout`.
-            requests.exceptions.RequestException: Network or API endpoint errors during polling.
-            Exception: If the API returns an error status code (4xx, 5xx) during polling
-                       or if the task itself failed.
+            Exception: If the task does not complete within the specified *timeout*,
+                or the API returns an error during polling.
 
         Example:
-            >>> # Assume 'client' is an initialized RoExClient and 'task_id' was obtained previously
-            >>> try:
-            >>>     results = client.enhance.retrieve_enhanced_track(task_id)
-            >>>     if results.get('status') == 'completed':
-            >>>         enhanced_url = results.get('results', {}).get('enhanced_audio_file_location')
-            >>>         print(f"Enhancement complete! Audio URL: {enhanced_url}")
-            >>>         stems = results.get('results', {}).get('stems')
-            >>>         if stems:
-            >>>             print(f"Stems generated:")
-            >>>             for stem_name, stem_url in stems.items():
-            >>>                 print(f"  - {stem_name}: {stem_url}")
-            >>>     else:
-            >>>         error_msg = results.get('results', {}).get('error_message', 'Unknown error')
-            >>>         print(f"Task failed or timed out. Status: {results.get('status')}. Error: {error_msg}")
-            >>> except TimeoutError:
-            >>>     print("Task timed out.")
-            >>> except Exception as e:
-            >>>     print(f"An error occurred while retrieving results: {e}")
+            >>> result = client.enhance.retrieve_enhanced_track(task_id)
+            >>> print(result.download_url_preview_revived)
+            >>> if result.stems:
+            ...     for name, url in result.stems.items():
+            ...         print(f"{name}: {url}")
         """
         logger.info(f"Attempting to retrieve results for task ID: {task_id}")
         payload = {
@@ -230,32 +212,30 @@ class EnhanceController:
             }
         }
 
-        # Poll for results
         for attempt in range(timeout // poll_interval):
             try:
                 logger.debug(f"Polling attempt {attempt + 1}/{timeout // poll_interval}...")
                 response = self.api_provider.post("/retrieveenhancedtrack", payload)
 
                 if not response.get("error", False):
-                    results = response.get("revived_track_tasks_results", {})
-                    if results:
+                    results = response.get("revivedTrackTaskResults", {})
+                    has_url = (
+                        results.get("download_url_preview_revived")
+                        or results.get("download_url_revived")
+                    )
+                    if results and has_url:
                         logger.info(f"Enhanced track retrieved successfully for task ID: {task_id}")
-                        return results
-
-                    # Some API versions might return a different format
-                    for key in response:
-                        if isinstance(response[key], dict) and (
-                                "download_url_revived" in response[key] or
-                                "download_url_preview_revived" in response[key]
-                        ):
-                            logger.info(f"Enhanced track retrieved successfully for task ID: {task_id}")
-                            return response[key]
+                        return EnhancedTrackResult(
+                            download_url_preview_revived=results.get("download_url_preview_revived"),
+                            download_url_revived=results.get("download_url_revived"),
+                            stems=results.get("stems"),
+                            preview_start_time=results.get("preview_start_time"),
+                        )
             except requests.HTTPError as e:
                 logger.error(f"Error during polling: {str(e)}")
             except Exception as e:
                 logger.exception(f"Unexpected error during polling for task ID: {task_id}: {e}")
 
-            # Wait before next attempt
             time.sleep(poll_interval)
 
         logger.error(f"Enhanced track was not available after polling for task ID: {task_id}.")
