@@ -185,7 +185,7 @@ def advanced_mix_workflow(bass_path: str, vocals_path: str, drums_path: str = No
         logger.info("? Mix preview ready!")
         
         # Download preview
-        preview_url = preview_results.get('download_url_preview_mixed')
+        preview_url = preview_results.download_url_preview_mixed
         if preview_url:
             preview_file = output_path / "mix_preview.wav"
             if client.api_provider.download_file(preview_url, str(preview_file)):
@@ -273,7 +273,7 @@ def advanced_mix_workflow(bass_path: str, vocals_path: str, drums_path: str = No
         logger.info("? Advanced final mix complete!")
         
         # Download final mix
-        final_url = final_mix_results.get('download_url_mixed') or final_mix_results.get('download_url_final_mix')
+        final_url = final_mix_results.download_url_mixed
         if final_url:
             final_file = output_path / "mix_final_advanced.wav"
             if client.api_provider.download_file(final_url, str(final_file)):

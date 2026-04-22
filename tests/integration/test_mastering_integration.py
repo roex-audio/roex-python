@@ -52,13 +52,13 @@ class TestMasteringIntegration:
             max_attempts=30,
             poll_interval=5
         )
-        assert "download_url_mastered_preview" in preview
-        print(f"Preview ready: {preview.get('download_url_mastered_preview')}")
+        assert preview.download_url_mastered_preview is not None
+        print(f"Preview ready: {preview.download_url_mastered_preview}")
         
         # Retrieve final master
-        final_url = client.mastering.retrieve_final_master(task.mastering_task_id)
-        assert final_url is not None
-        print(f"Final master URL: {final_url}")
+        final_result = client.mastering.retrieve_final_master(task.mastering_task_id)
+        assert final_result.download_url_mastered is not None
+        print(f"Final master URL: {final_result.download_url_mastered}")
     
     def test_mastering_different_styles(self, requires_api_key, integration_audio_file):
         """Test mastering with different musical styles"""
