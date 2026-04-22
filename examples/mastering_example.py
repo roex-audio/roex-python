@@ -110,7 +110,7 @@ def master_single_track(client: RoExClient, file_path: Path, output_dir: Path):
 
         logger.info("Retrieving preview master (this may take some time)...")
         preview_results = client.mastering.retrieve_preview_master(mastering_task_id)
-        preview_url = preview_results.get('download_url_mastered_preview')
+        preview_url = preview_results.download_url_mastered_preview
         if preview_url:
             logger.info("Preview master ready.")
             # Optional: Download preview
@@ -130,11 +130,10 @@ def master_single_track(client: RoExClient, file_path: Path, output_dir: Path):
     try:
         logger.info("Retrieving final master URL (this may take some time)...")
         # This retrieves the download URL for the final mastered file
-        final_url_response = client.mastering.retrieve_final_master(mastering_task_id)
-        final_url = final_url_response.get('download_url_mastered')
+        final_result = client.mastering.retrieve_final_master(mastering_task_id)
+        final_url = final_result.download_url_mastered
         if not final_url:
-            error_msg = final_url_response.get('message', 'No URL found')
-            logger.error(f"Could not retrieve final master URL. Error: {error_msg}")
+            logger.error("Could not retrieve final master URL.")
             return False
         logger.info("Final master URL ready.")
     except Exception as e:

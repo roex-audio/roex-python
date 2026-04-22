@@ -132,7 +132,7 @@ def enhance_workflow(input_file: str = None):
         logger.error(f"Error retrieving preview: {e}")
         return
 
-    preview_url = preview_results.get("download_url_preview_revived")
+    preview_url = preview_results.download_url_preview_revived
     if not preview_url:
         logger.error("No preview URL received")
         return
@@ -148,7 +148,7 @@ def enhance_workflow(input_file: str = None):
         logger.error("Failed to download preview")
         return
 
-    stems = preview_results.get('stems', {})
+    stems = preview_results.stems or {}
     if stems:
         logger.info("\nDownloading preview stems...")
         for stem_name, stem_url in stems.items():
@@ -177,7 +177,7 @@ def enhance_workflow(input_file: str = None):
         logger.error(f"Error retrieving full enhancement: {e}")
         return None
 
-    final_url = full_results.get('download_url_revived')
+    final_url = full_results.download_url_revived
     if not final_url:
         logger.error("No final enhancement URL received")
         return
@@ -191,7 +191,7 @@ def enhance_workflow(input_file: str = None):
         return
     logger.info(f"Downloaded full enhancement to {full_path}")
 
-    stems = full_results.get('stems', {})
+    stems = full_results.stems or {}
     if stems:
         logger.info("\nDownloading final stems...")
         for stem_name, stem_url in stems.items():
