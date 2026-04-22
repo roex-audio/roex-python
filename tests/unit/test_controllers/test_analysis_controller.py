@@ -6,7 +6,7 @@ import pytest
 from unittest.mock import Mock
 import requests
 from roex_python.controllers.analysis_controller import AnalysisController
-from roex_python.models import MixAnalysisRequest, AnalysisMusicalStyle
+from roex_python.models import MixAnalysisRequest, AnalysisMusicalStyle, AnalysisResult
 
 
 @pytest.mark.unit
@@ -48,13 +48,12 @@ class TestAnalyzeMix:
             is_master=False
         )
         
-        # Execute
         result = controller.analyze_mix(request)
         
-        # Assert
-        assert "payload" in result
-        assert result["payload"]["integrated_loudness_lufs"] == -14.5
-        assert result["payload"]["clipping"] == "NO"
+        assert isinstance(result, AnalysisResult)
+        assert result.payload["integrated_loudness_lufs"] == -14.5
+        assert result.payload["clipping"] == "NO"
+        assert result.error is False
         
         # Verify correct payload was sent
         call_args = mock_api_provider.post.call_args
@@ -93,7 +92,6 @@ class TestAnalyzeMix:
     
     def test_response_without_expected_format(self, mock_api_provider):
         """Test handling of response without expected format"""
-        # Setup
         mock_api_provider.post.return_value = {
             "some_other_key": "value"
         }
@@ -106,11 +104,10 @@ class TestAnalyzeMix:
             is_master=False
         )
         
-        # Execute
         result = controller.analyze_mix(request)
         
-        # Assert - should return raw response
-        assert result == {"some_other_key": "value"}
+        assert isinstance(result, AnalysisResult)
+        assert result.payload is None
     
     def test_http_error_handling(self, mock_api_provider):
         """Test error handling when API returns HTTP error"""
@@ -236,8 +233,8 @@ class TestExtractMetrics:
         """Test extraction of all available metrics"""
         controller = AnalysisController(mock_api_provider)
         
-        diagnosis = {
-            "payload": {
+        diagnosis = AnalysisResult(
+            payload={
                 "bit_depth": 24,
                 "clipping": "NO",
                 "integrated_loudness_lufs": -14.5,
@@ -250,12 +247,10 @@ class TestExtractMetrics:
                     "high_frequency": "BRIGHT"
                 }
             }
-        }
+        )
         
-        # Execute
         metrics = controller._extract_metrics(diagnosis)
         
-        # Assert
         assert metrics["bit_depth"] == 24
         assert metrics["clipping"] == "NO"
         assert metrics["integrated_loudness_lufs"] == -14.5
@@ -267,17 +262,14 @@ class TestExtractMetrics:
         """Test extraction when some fields are missing"""
         controller = AnalysisController(mock_api_provider)
         
-        diagnosis = {
-            "payload": {
+        diagnosis = AnalysisResult(
+            payload={
                 "integrated_loudness_lufs": -14.5,
-                # Missing many fields
             }
-        }
+        )
         
-        # Execute
         metrics = controller._extract_metrics(diagnosis)
         
-        # Assert - missing fields should be "N/A"
         assert metrics["integrated_loudness_lufs"] == -14.5
         assert metrics["clipping"] == "N/A"
         assert metrics["bit_depth"] == "N/A"
@@ -286,12 +278,10 @@ class TestExtractMetrics:
         """Test extraction with empty payload"""
         controller = AnalysisController(mock_api_provider)
         
-        diagnosis = {}
+        diagnosis = AnalysisResult()
         
-        # Execute
         metrics = controller._extract_metrics(diagnosis)
         
-        # Assert - all fields should be "N/A"
         assert all(value == "N/A" or value == {} for value in metrics.values())
 
 
@@ -303,28 +293,22 @@ class TestCompareMetrics:
         """Test comparison of numeric values"""
         controller = AnalysisController(mock_api_provider)
         
-        results_a = {
-            "payload": {
-                "integrated_loudness_lufs": -14.0,
-                "peak_loudness_dbfs": -1.0,
-                "bit_depth": 24,
-                "sample_rate": 44100
-            }
-        }
+        results_a = AnalysisResult(payload={
+            "integrated_loudness_lufs": -14.0,
+            "peak_loudness_dbfs": -1.0,
+            "bit_depth": 24,
+            "sample_rate": 44100
+        })
         
-        results_b = {
-            "payload": {
-                "integrated_loudness_lufs": -10.0,
-                "peak_loudness_dbfs": -0.5,
-                "bit_depth": 16,
-                "sample_rate": 48000
-            }
-        }
+        results_b = AnalysisResult(payload={
+            "integrated_loudness_lufs": -10.0,
+            "peak_loudness_dbfs": -0.5,
+            "bit_depth": 16,
+            "sample_rate": 48000
+        })
         
-        # Execute
         differences = controller._compare_metrics(results_a, results_b)
         
-        # Assert
         assert differences["integrated_loudness_lufs"]["difference"] == 4.0
         assert differences["peak_loudness_dbfs"]["difference"] == 0.5
         assert differences["bit_depth"]["difference"] == 8.0
@@ -334,24 +318,11 @@ class TestCompareMetrics:
         """Test comparison of categorical values"""
         controller = AnalysisController(mock_api_provider)
         
-        results_a = {
-            "payload": {
-                "clipping": "NO",
-                "stereo_field": "GOOD"
-            }
-        }
+        results_a = AnalysisResult(payload={"clipping": "NO", "stereo_field": "GOOD"})
+        results_b = AnalysisResult(payload={"clipping": "YES", "stereo_field": "GOOD"})
         
-        results_b = {
-            "payload": {
-                "clipping": "YES",
-                "stereo_field": "GOOD"
-            }
-        }
-        
-        # Execute
         differences = controller._compare_metrics(results_a, results_b)
         
-        # Assert
         assert differences["clipping"]["status"] == "DIFFERENT"
         assert differences["stereo_field"]["status"] == "SAME"
     
@@ -359,27 +330,14 @@ class TestCompareMetrics:
         """Test comparison of tonal profiles"""
         controller = AnalysisController(mock_api_provider)
         
-        results_a = {
-            "payload": {
-                "tonal_profile": {
-                    "bass_frequency": "GOOD",
-                    "high_frequency": "BRIGHT"
-                }
-            }
-        }
+        results_a = AnalysisResult(payload={
+            "tonal_profile": {"bass_frequency": "GOOD", "high_frequency": "BRIGHT"}
+        })
+        results_b = AnalysisResult(payload={
+            "tonal_profile": {"bass_frequency": "WEAK", "high_frequency": "BRIGHT"}
+        })
         
-        results_b = {
-            "payload": {
-                "tonal_profile": {
-                    "bass_frequency": "WEAK",
-                    "high_frequency": "BRIGHT"
-                }
-            }
-        }
-        
-        # Execute
         differences = controller._compare_metrics(results_a, results_b)
         
-        # Assert
         assert differences["tonal_profile"]["bass_frequency"]["status"] == "DIFFERENT"
         assert differences["tonal_profile"]["high_frequency"]["status"] == "SAME"

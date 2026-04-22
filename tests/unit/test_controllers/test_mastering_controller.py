@@ -9,7 +9,7 @@ import time
 from roex_python.controllers.mastering_controller import MasteringController
 from roex_python.models import (
     MasteringRequest, MusicalStyle, DesiredLoudness,
-    MasteringTaskResponse
+    MasteringTaskResponse, PreviewMasterResult, FinalMasterResult
 )
 
 
@@ -102,27 +102,23 @@ class TestRetrievePreviewMaster:
     
     def test_immediate_success(self, mock_api_provider):
         """Test when preview is immediately available"""
-        # Setup
         mock_api_provider.post.return_value = {
             "previewMasterTaskResults": {
                 "download_url_mastered_preview": "https://example.com/preview.wav",
-                "status": "completed"
+                "preview_start_time": 15.0
             }
         }
         
         controller = MasteringController(mock_api_provider)
-        
-        # Execute
         result = controller.retrieve_preview_master("task_123")
         
-        # Assert
-        assert result["download_url_mastered_preview"] == "https://example.com/preview.wav"
-        assert result["status"] == "completed"
+        assert isinstance(result, PreviewMasterResult)
+        assert result.download_url_mastered_preview == "https://example.com/preview.wav"
+        assert result.preview_start_time == 15.0
     
     @patch('roex_python.controllers.mastering_controller.time.sleep')
     def test_polling_until_ready(self, mock_sleep, mock_api_provider):
         """Test polling until preview is ready"""
-        # Setup - first call returns pending, second returns result
         mock_api_provider.post.side_effect = [
             requests.HTTPError("Not ready"),
             {"status": 202},
@@ -134,12 +130,10 @@ class TestRetrievePreviewMaster:
         ]
         
         controller = MasteringController(mock_api_provider)
-        
-        # Execute
         result = controller.retrieve_preview_master("task_123", poll_interval=1)
         
-        # Assert
-        assert result["download_url_mastered_preview"] == "https://example.com/preview.wav"
+        assert isinstance(result, PreviewMasterResult)
+        assert result.download_url_mastered_preview == "https://example.com/preview.wav"
         assert mock_api_provider.post.call_count == 3
     
     @patch('roex_python.controllers.mastering_controller.time.sleep')
@@ -169,7 +163,6 @@ class TestRetrieveFinalMaster:
     
     def test_structured_response(self, mock_api_provider):
         """Test with structured response format"""
-        # Setup
         mock_api_provider.post.return_value = {
             "finalMasterTaskResults": {
                 "download_url_mastered": "https://example.com/final.wav"
@@ -177,25 +170,22 @@ class TestRetrieveFinalMaster:
         }
         
         controller = MasteringController(mock_api_provider)
-        
-        # Execute
         result = controller.retrieve_final_master("task_123")
         
-        # Assert
-        assert result["download_url_mastered"] == "https://example.com/final.wav"
+        assert isinstance(result, FinalMasterResult)
+        assert result.download_url_mastered == "https://example.com/final.wav"
     
-    def test_direct_url_response(self, mock_api_provider):
-        """Test when response is direct URL"""
-        # Setup
-        mock_api_provider.post.return_value = "https://example.com/final.wav"
+    def test_direct_url_in_response(self, mock_api_provider):
+        """Test when download_url_mastered is directly in response dict"""
+        mock_api_provider.post.return_value = {
+            "download_url_mastered": "https://example.com/final.wav"
+        }
         
         controller = MasteringController(mock_api_provider)
-        
-        # Execute
         result = controller.retrieve_final_master("task_123")
         
-        # Assert
-        assert result == "https://example.com/final.wav"
+        assert isinstance(result, FinalMasterResult)
+        assert result.download_url_mastered == "https://example.com/final.wav"
     
     def test_http_error(self, mock_api_provider):
         """Test error handling"""

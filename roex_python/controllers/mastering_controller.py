@@ -10,9 +10,11 @@ import logging
 import requests
 
 from roex_python.models.mastering import (
+    AlbumMasteringRequest,
+    FinalMasterResult,
     MasteringRequest,
     MasteringTaskResponse,
-    AlbumMasteringRequest
+    PreviewMasterResult
 )
 from roex_python.providers.api_provider import ApiProvider
 
@@ -107,45 +109,30 @@ class MasteringController:
             raise
 
     def retrieve_preview_master(self, task_id: str, max_attempts: int = 30,
-                                poll_interval: int = 5) -> Dict[str, Any]:
+                                poll_interval: int = 5) -> PreviewMasterResult:
         """
         Retrieve the results of a mastering preview task, polling until complete.
 
-        Checks the status of a mastering task initiated by `create_mastering_preview`.
-        Polls the API periodically until the task completes or the maximum number
-        of attempts is reached.
+        Polls the ``/retrievepreviewmaster`` endpoint until
+        ``previewMasterTaskResults`` is present or *max_attempts* is exhausted.
 
         Args:
-            task_id (str): The `mastering_task_id` obtained from the
-                `create_mastering_preview` response.
-            max_attempts (int, optional): Maximum number of polling attempts before
-                timing out. Defaults to 30.
-            poll_interval (int, optional): Seconds to wait between polling attempts.
-                Defaults to 5.
+            task_id (str): The ``mastering_task_id`` from ``create_mastering_preview``.
+            max_attempts (int): Maximum polling iterations. Defaults to 30.
+            poll_interval (int): Seconds between polls. Defaults to 5.
 
         Returns:
-            Dict[str, Any]: A dictionary containing the results of the preview master.
-                Key fields typically include:
-                - 'status': Final status (e.g., 'MASTERING_TASK_PREVIEW_COMPLETED').
-                - 'download_url_mastered_preview': URL to download the preview audio.
-                Check the official RoEx API documentation for the exact structure.
+            PreviewMasterResult: A typed result containing:
+                - ``download_url_mastered_preview`` (Optional[str]): Signed URL for the mastered preview.
+                - ``preview_start_time`` (Optional[float]): Offset in seconds where the
+                  preview clip starts in the original track.
 
         Raises:
-            requests.exceptions.RequestException: If an API request fails during polling.
-            Exception: If the task does not complete successfully within `max_attempts`,
-                       if the API returns an error during polling, or for other
-                       API errors (4xx/5xx).
+            Exception: If the task does not complete within *max_attempts* polls.
 
         Example:
-            >>> # Assume 'client' is an initialized RoExClient
-            >>> # Assume 'task_id' was obtained from create_mastering_preview
-            >>> try:
-            >>>     master_results = client.mastering.retrieve_preview_master(task_id)
-            >>>     print(f"Mastering Preview Status: {master_results.get('status')}")
-            >>>     print(f"Preview Download URL: {master_results.get('download_url_mastered_preview')}")
-            >>>     # Further process the results (e.g., download the file)
-            >>> except Exception as e:
-            >>>     print(f"Error retrieving mastering preview: {e}")
+            >>> result = client.mastering.retrieve_preview_master(task_id)
+            >>> print(result.download_url_mastered_preview)
         """
         logger.info(f"Retrieving preview master for task ID: {task_id}")
         payload = {
@@ -154,85 +141,65 @@ class MasteringController:
             }
         }
 
-        # Try initial request
+        def _parse(raw: Dict[str, Any]) -> PreviewMasterResult:
+            return PreviewMasterResult(
+                download_url_mastered_preview=raw.get("download_url_mastered_preview"),
+                preview_start_time=raw.get("preview_start_time"),
+            )
+
         try:
             response = self.api_provider.post("/retrievepreviewmaster", payload)
             if "previewMasterTaskResults" in response:
                 logger.info(f"Preview master ready for task ID: {task_id}")
-                return response["previewMasterTaskResults"]
+                return _parse(response["previewMasterTaskResults"])
         except requests.HTTPError:
-            # Initial request failed, let's try polling
             logger.warning(f"Initial request failed for task ID: {task_id}. Starting polling...")
             pass
 
-        # Poll for results
         for attempt in range(max_attempts):
             try:
                 logger.debug(f"Polling attempt {attempt + 1}/{max_attempts} for task ID: {task_id}")
                 response = self.api_provider.post("/retrievepreviewmaster", payload)
 
-                # If we get a 200 response with results
                 if "previewMasterTaskResults" in response:
                     logger.info(f"Preview master ready for task ID: {task_id}")
-                    return response["previewMasterTaskResults"]
+                    return _parse(response["previewMasterTaskResults"])
 
-                # Check for specific status codes
                 status_code = response.get("status", 0)
                 if status_code == 202:
                     logger.info(f"Task still processing for task ID: {task_id}...")
-                elif status_code == 200:
-                    # If we get a 200 but no results, try to parse the response differently
-                    if isinstance(response, dict):
-                        for key, value in response.items():
-                            if isinstance(value, dict) and "download_url_mastered_preview" in value:
-                                logger.info(f"Preview master ready for task ID: {task_id}")
-                                return value
             except requests.HTTPError as e:
                 logger.error(f"Error during polling for task ID: {task_id}: {e}")
             except Exception as e:
                 logger.exception(f"Unexpected error during polling for task ID: {task_id}: {e}")
 
-            # Wait before next attempt
             time.sleep(poll_interval)
 
         logger.error(f"Timeout waiting for preview master for task ID: {task_id} after {max_attempts} attempts.")
         raise Exception(f"Preview master task {task_id} did not complete after polling for {max_attempts * poll_interval} seconds.")
 
-    def retrieve_final_master(self, task_id: str) -> Dict[str, Any]:
+    def retrieve_final_master(self, task_id: str) -> FinalMasterResult:
         """
         Retrieve the final mastered audio file.
 
-        This method fetches the final output of a completed mastering task.
-        It's typically called after `create_mastering_preview` and potentially
-        `retrieve_preview_master` confirm the task is done, although polling
-        is not built into this specific retrieval method.
+        Fetches the result from ``/retrievefinalmaster``. Call after
+        ``create_mastering_preview`` and ``retrieve_preview_master`` have
+        confirmed the task is done.
 
         Args:
-            task_id (str): The `mastering_task_id` obtained from the
-                `create_mastering_preview` response.
+            task_id (str): The ``mastering_task_id`` from ``create_mastering_preview``.
 
         Returns:
-            Dict[str, Any]: A dictionary containing the results of the final master.
-                Key fields typically include:
-                - 'status': Final status (e.g., 'MASTERING_TASK_FINAL_COMPLETED').
-                - 'download_url_mastered_final': URL to download the final audio.
-                Check the official RoEx API documentation for the exact structure.
+            FinalMasterResult: A typed result containing:
+                - ``download_url_mastered`` (Optional[str]): Signed URL for the final
+                  mastered audio file.
 
         Raises:
-            requests.exceptions.RequestException: If the API request fails.
-            Exception: If the API returns an error response (e.g., 4xx, 5xx status codes),
-                       indicating issues like task not found, task not complete, or server errors.
+            Exception: If the API returns an error response.
 
         Example:
-            >>> # Assume 'client' is an initialized RoExClient
-            >>> # Assume 'task_id' was obtained from create_mastering_preview and preview is complete
-            >>> try:
-            >>>     final_master_results = client.mastering.retrieve_final_master(task_id)
-            >>>     print(f"Final Master Status: {final_master_results.get('status')}")
-            >>>     print(f"Final Download URL: {final_master_results.get('download_url_mastered_final')}")
-            >>>     # Further process the results
-            >>> except Exception as e:
-            >>>     print(f"Error retrieving final master: {e}")
+            >>> result = client.mastering.retrieve_final_master(task_id)
+            >>> print(result.download_url_mastered)
         """
         logger.info(f"Retrieving final master for task ID: {task_id}")
         payload = {
@@ -244,23 +211,20 @@ class MasteringController:
         try:
             response = self.api_provider.post("/retrievefinalmaster", payload)
 
-            # Handle different response formats
             if "finalMasterTaskResults" in response:
-                # If it's a structured response
+                raw = response["finalMasterTaskResults"]
                 logger.info(f"Final master ready for task ID: {task_id}")
-                return response["finalMasterTaskResults"]
+                return FinalMasterResult(
+                    download_url_mastered=raw.get("download_url_mastered"),
+                )
             elif isinstance(response, dict) and "download_url_mastered" in response:
-                # If the URL is directly in the response
                 logger.info(f"Final master ready for task ID: {task_id}")
-                return response["download_url_mastered"]
-            elif isinstance(response, str) and (response.startswith("http://") or response.startswith("https://")):
-                # If the response is just the URL as a string
-                logger.info(f"Final master ready for task ID: {task_id}")
-                return response
+                return FinalMasterResult(
+                    download_url_mastered=response.get("download_url_mastered"),
+                )
 
-            # Default fallback
-            logger.warning(f"Unknown response format for task ID: {task_id}. Returning raw response.")
-            return response
+            logger.warning(f"Unknown response format for task ID: {task_id}. Returning empty result.")
+            return FinalMasterResult()
         except requests.HTTPError as e:
             logger.exception(f"HTTP error retrieving final master for task ID: {task_id}: {e}")
             raise Exception(f"Failed to retrieve final master: {e}")
@@ -303,7 +267,7 @@ class MasteringController:
 
             # Get final master
             try:
-                final_url = self.retrieve_final_master(task_id)['download_url_mastered']
+                final_url = self.retrieve_final_master(task_id).download_url_mastered
                 results[idx] = final_url
 
                 # Download the file

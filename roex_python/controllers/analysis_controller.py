@@ -7,7 +7,7 @@ from typing import Dict, Any, List
 import requests
 import logging
 
-from roex_python.models.analysis import MixAnalysisRequest, AnalysisMusicalStyle
+from roex_python.models.analysis import AnalysisMusicalStyle, AnalysisResult, MixAnalysisRequest
 from roex_python.providers.api_provider import ApiProvider
 
 # Initialize logger for this module
@@ -30,47 +30,33 @@ class AnalysisController:
         self.api_provider = api_provider
         logger.info("AnalysisController initialized.")
 
-    def analyze_mix(self, request: MixAnalysisRequest) -> Dict[str, Any]:
+    def analyze_mix(self, request: MixAnalysisRequest) -> AnalysisResult:
         """
         Analyze a single mix or master track to retrieve detailed metrics.
 
-        This method sends the track URL and analysis parameters to the API
-        and returns the analysis results synchronously.
+        Sends the track URL and analysis parameters to ``/mixanalysis`` and
+        returns the results synchronously.
 
         Args:
-            request (MixAnalysisRequest): An object containing the track URL
-                (`audio_file_location`), the musical style for reference
-                (`musical_style`), and whether the track is mastered (`is_master`).
-                The URL must point to an accessible WAV or FLAC file.
+            request (MixAnalysisRequest): The track URL, musical style reference,
+                and ``is_master`` flag.
 
         Returns:
-            Dict[str, Any]: A dictionary containing the analysis results.
-                The structure typically includes detailed metrics under a 'payload' key,
-                covering loudness, dynamics, stereo field, phase, tonal balance, etc.
-                Check the official RoEx API documentation for the full structure.
+            AnalysisResult: A typed result containing:
+                - ``payload`` (Optional[Dict[str, Any]]): Diagnosis metrics including
+                  ``integrated_loudness_lufs``, ``peak_loudness_dbfs``,
+                  ``tonal_profile``, ``clipping``, ``stereo_field``, ``phase_issues``,
+                  ``bit_depth``, ``sample_rate``, etc.
+                - ``error`` (bool): Whether the analysis encountered an error.
+                - ``info`` (str): Additional information from the API.
+                - ``completion_time`` (str): When the analysis finished.
 
         Raises:
-            requests.exceptions.RequestException: If the API request fails due to network
-                                                 issues or invalid endpoint.
-            Exception: If the API returns an error response (e.g., 4xx, 5xx status codes)
-                       indicating issues like invalid input, file access problems, or
-                       server errors.
+            Exception: If the API returns an error response.
 
         Example:
-            >>> from roex_python.models import MixAnalysisRequest, AnalysisMusicalStyle
-            >>> # Assume 'client' is an initialized RoExClient
-            >>> # Assume 'track_url' is a URL obtained after uploading a local file
-            >>> analysis_request = MixAnalysisRequest(
-            ...     audio_file_location=track_url,
-            ...     musical_style=AnalysisMusicalStyle.ROCK_PUNK,
-            ...     is_master=False
-            ... )
-            >>> try:
-            >>>     analysis_results = client.analysis.analyze_mix(analysis_request)
-            >>>     print(f"Analysis Loudness (LUFS): {analysis_results.get('payload', {}).get('integrated_loudness_lufs')}")
-            >>>     # Explore other metrics in analysis_results['payload']
-            >>> except Exception as e:
-            >>>     print(f"Error analyzing mix: {e}")
+            >>> result = client.analysis.analyze_mix(request)
+            >>> print(result.payload.get("integrated_loudness_lufs"))
         """
         logger.info(f"Analyzing mix with parameters: {request}")
         payload = {
@@ -84,11 +70,14 @@ class AnalysisController:
         try:
             logger.debug(f"Sending analysis request to API: {payload}")
             response = self.api_provider.post("/mixanalysis", payload)
-            if "mixDiagnosisResults" in response:
-                logger.info("Analysis results received successfully.")
-                return response["mixDiagnosisResults"]
-            logger.info("Analysis results received without expected format.")
-            return response
+            raw = response.get("mixDiagnosisResults", response)
+            logger.info("Analysis results received successfully.")
+            return AnalysisResult(
+                payload=raw.get("payload"),
+                error=raw.get("error", False),
+                info=raw.get("info", ""),
+                completion_time=raw.get("completion_time", ""),
+            )
         except requests.HTTPError as e:
             logger.error(f"Failed to analyze mix: {str(e)}")
             raise Exception(f"Failed to analyze mix: {str(e)}")
@@ -101,43 +90,23 @@ class AnalysisController:
         """
         Analyze two mixes and provide a comparison of their key metrics.
 
-        This method internally calls `analyze_mix` for both provided track URLs
-        and then computes differences between key metrics.
+        Calls ``analyze_mix`` for both URLs and computes per-metric differences.
 
         Args:
-            mix_a_url (str): URL of the first mix (must be accessible WAV/FLAC).
-            mix_b_url (str): URL of the second mix (must be accessible WAV/FLAC).
-            musical_style (AnalysisMusicalStyle): The musical style reference for analysis.
-            is_master (bool, optional): Whether the tracks should be analyzed as
-                mastered tracks. Defaults to False.
+            mix_a_url (str): URL of the first mix (accessible WAV/FLAC).
+            mix_b_url (str): URL of the second mix (accessible WAV/FLAC).
+            musical_style (AnalysisMusicalStyle): Musical style reference for analysis.
+            is_master (bool): Whether to analyze as mastered tracks. Defaults to False.
 
         Returns:
-            Dict[str, Any]: A dictionary containing 'mix_a' results, 'mix_b' results, 
-                          and calculated 'differences' between key metrics (loudness, etc.).
+            Dict[str, Any]: ``{"mix_a": {...}, "mix_b": {...}, "differences": {...}}``.
 
         Raises:
-            requests.exceptions.RequestException: If either underlying `analyze_mix` call fails
-                                                 due to network issues.
-            Exception: If either underlying `analyze_mix` call returns an API error,
-                       or if there's an issue during metric extraction/comparison.
+            Exception: If either underlying ``analyze_mix`` call fails.
 
         Example:
-            >>> from roex_python.models import AnalysisMusicalStyle
-            >>> # Assume 'client' is an initialized RoExClient
-            >>> # Assume 'track_url_a', 'track_url_b' are URLs for two mixes
-            >>> try:
-            >>>     comparison = client.analysis.compare_mixes(
-            ...         mix_a_url=track_url_a,
-            ...         mix_b_url=track_url_b,
-            ...         musical_style=AnalysisMusicalStyle.POP,
-            ...         is_master=True
-            ...     )
-            >>>     print(f"Mix A LUFS: {comparison['mix_a'].get('integrated_loudness_lufs')}")
-            >>>     print(f"Mix B LUFS: {comparison['mix_b'].get('integrated_loudness_lufs')}")
-            >>>     print(f"LUFS Difference: {comparison['differences'].get('integrated_loudness_lufs')}")
-            >>>     # Explore other comparison metrics
-            >>> except Exception as e:
-            >>>     print(f"Error comparing mixes: {e}")
+            >>> comparison = client.analysis.compare_mixes(url_a, url_b, AnalysisMusicalStyle.POP)
+            >>> print(comparison["differences"]["integrated_loudness_lufs"])
         """
         logger.info(f"Comparing mixes: {mix_a_url} and {mix_b_url} with musical style: {musical_style}")
         request_a = MixAnalysisRequest(
@@ -155,7 +124,6 @@ class AnalysisController:
         results_a = self.analyze_mix(request_a)
         results_b = self.analyze_mix(request_b)
 
-        # Extract key metrics for comparison
         comparison = {
             "mix_a": self._extract_metrics(results_a),
             "mix_b": self._extract_metrics(results_b),
@@ -165,18 +133,10 @@ class AnalysisController:
         logger.info("Comparison results generated successfully.")
         return comparison
 
-    def _extract_metrics(self, diagnosis: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Extract key metrics from diagnosis results
-
-        Args:
-            diagnosis: Mix diagnosis results
-
-        Returns:
-            Dictionary of extracted metrics
-        """
+    def _extract_metrics(self, diagnosis: AnalysisResult) -> Dict[str, Any]:
+        """Extract key metrics from an AnalysisResult."""
         logger.debug(f"Extracting metrics from diagnosis results: {diagnosis}")
-        payload = diagnosis.get("payload", {})
+        payload = diagnosis.payload or {}
 
         # Extract production metrics
         production_keys = [
@@ -193,17 +153,8 @@ class AnalysisController:
         logger.info("Metrics extracted successfully.")
         return metrics
 
-    def _compare_metrics(self, results_a: Dict[str, Any], results_b: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Compare metrics between two analysis results
-
-        Args:
-            results_a: First mix diagnosis results
-            results_b: Second mix diagnosis results
-
-        Returns:
-            Dictionary of differences
-        """
+    def _compare_metrics(self, results_a: AnalysisResult, results_b: AnalysisResult) -> Dict[str, Any]:
+        """Compare metrics between two AnalysisResult objects."""
         logger.info("Comparing metrics between two analysis results.")
         metrics_a = self._extract_metrics(results_a)
         metrics_b = self._extract_metrics(results_b)

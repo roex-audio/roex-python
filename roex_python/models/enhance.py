@@ -4,7 +4,7 @@ Models for the mix enhance API endpoints
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
+from typing import Dict, Optional
 
 from roex_python.models.common import LoudnessPreference
 
@@ -58,3 +58,20 @@ class MixEnhanceResponse:
     mixrevive_task_id: str
     error: bool
     message: str
+
+
+@dataclass
+class EnhancedTrackResult:
+    """Result of a completed mix enhancement (preview or full).
+
+    Returned by ``EnhanceController.retrieve_enhanced_track`` after polling
+    the ``/retrieveenhancedtrack`` endpoint.
+    """
+    download_url_preview_revived: Optional[str] = None
+    """Optional[str]: Signed URL for the MP3 preview of the enhanced track."""
+    download_url_revived: Optional[str] = None
+    """Optional[str]: Signed URL for the full WAV enhanced track."""
+    stems: Optional[Dict[str, str]] = None
+    """Optional[Dict[str, str]]: URLs keyed by stem name (``vocal``, ``bass``, ``drums``, ``other``)."""
+    preview_start_time: Optional[float] = None
+    """Optional[float]: Offset in seconds where the preview clip starts in the original track."""

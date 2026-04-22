@@ -17,8 +17,10 @@ from roex_python.models.common import (
 from roex_python.models.mixing import (
     FinalMixRequest,
     FinalMixRequestAdvanced,
+    FinalMixResult,
     MultitrackMixRequest,
     MultitrackTaskResponse,
+    PreviewMixResult,
     TrackData,
     TrackGainData,
     TrackEffectsData,
@@ -31,18 +33,22 @@ from roex_python.models.mixing import (
 # Import mastering models
 from roex_python.models.mastering import (
     AlbumMasteringRequest,
+    FinalMasterResult,
     MasteringRequest,
-    MasteringTaskResponse
+    MasteringTaskResponse,
+    PreviewMasterResult
 )
 
 # Import analysis models
 from roex_python.models.analysis import (
     AnalysisMusicalStyle,
+    AnalysisResult,
     MixAnalysisRequest
 )
 
 # Import enhance models
 from roex_python.models.enhance import (
+    EnhancedTrackResult,
     EnhanceMusicalStyle,
     MixEnhanceRequest,
     MixEnhanceResponse
@@ -75,8 +81,10 @@ __all__ = [
     # Mixing models
     "FinalMixRequest",
     "FinalMixRequestAdvanced",
+    "FinalMixResult",
     "MultitrackMixRequest",
     "MultitrackTaskResponse",
+    "PreviewMixResult",
     "TrackData",
     "TrackGainData",
     "TrackEffectsData",
@@ -87,14 +95,18 @@ __all__ = [
 
     # Mastering models
     "AlbumMasteringRequest",
+    "FinalMasterResult",
     "MasteringRequest",
     "MasteringTaskResponse",
+    "PreviewMasterResult",
 
     # Analysis models
     "AnalysisMusicalStyle",
+    "AnalysisResult",
     "MixAnalysisRequest",
 
     # Enhance models
+    "EnhancedTrackResult",
     "EnhanceMusicalStyle",
     "MixEnhanceRequest",
     "MixEnhanceResponse",
