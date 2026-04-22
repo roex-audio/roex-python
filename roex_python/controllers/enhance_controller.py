@@ -219,7 +219,11 @@ class EnhanceController:
 
                 if not response.get("error", False):
                     results = response.get("revivedTrackTaskResults", {})
-                    if results:
+                    has_url = (
+                        results.get("download_url_preview_revived")
+                        or results.get("download_url_revived")
+                    )
+                    if results and has_url:
                         logger.info(f"Enhanced track retrieved successfully for task ID: {task_id}")
                         return EnhancedTrackResult(
                             download_url_preview_revived=results.get("download_url_preview_revived"),
