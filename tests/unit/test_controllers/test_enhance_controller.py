@@ -93,6 +93,28 @@ class TestCreateMixEnhancePreview:
         assert mix_data["applyMastering"] is True
         assert mix_data["stemProcessing"] is True
     
+    def test_with_preview_start_time(self, mock_api_provider):
+        """Test enhance preview includes previewStartTime in API payload"""
+        mock_api_provider.post.return_value = {
+            "mixrevive_task_id": "enhance_task_789",
+            "error": False,
+            "message": "Success"
+        }
+
+        controller = EnhanceController(mock_api_provider)
+
+        request = MixEnhanceRequest(
+            audio_file_location="https://example.com/mix.wav",
+            musical_style=MusicalStyle.POP,
+            preview_start_time=45.0
+        )
+
+        result = controller.create_mix_enhance_preview(request)
+
+        assert result.mixrevive_task_id == "enhance_task_789"
+        payload = mock_api_provider.post.call_args[0][1]
+        assert payload["mixReviveData"]["previewStartTime"] == 45.0
+
     def test_http_error_handling(self, mock_api_provider):
         """Test error handling when API returns HTTP error"""
         # Setup
@@ -322,3 +344,38 @@ class TestPayloadPreparation:
         )
         payload = controller._prepare_mix_enhance_payload(request)
         assert "fixDRCIssues" not in payload["mixReviveData"]
+
+    def test_payload_preview_start_time_included_when_provided(self, mock_api_provider):
+        """Test that previewStartTime is included in the payload when set"""
+        controller = EnhanceController(mock_api_provider)
+
+        request = MixEnhanceRequest(
+            audio_file_location="https://example.com/mix.wav",
+            musical_style=MusicalStyle.POP,
+            preview_start_time=45.0
+        )
+        payload = controller._prepare_mix_enhance_payload(request)
+        assert payload["mixReviveData"]["previewStartTime"] == 45.0
+
+    def test_payload_preview_start_time_zero_is_included(self, mock_api_provider):
+        """Test that previewStartTime=0 is included (not treated as falsy)"""
+        controller = EnhanceController(mock_api_provider)
+
+        request = MixEnhanceRequest(
+            audio_file_location="https://example.com/mix.wav",
+            musical_style=MusicalStyle.POP,
+            preview_start_time=0.0
+        )
+        payload = controller._prepare_mix_enhance_payload(request)
+        assert payload["mixReviveData"]["previewStartTime"] == 0.0
+
+    def test_payload_preview_start_time_omitted_when_none(self, mock_api_provider):
+        """Test that previewStartTime is NOT in the payload when not set (backward compat)"""
+        controller = EnhanceController(mock_api_provider)
+
+        request = MixEnhanceRequest(
+            audio_file_location="https://example.com/mix.wav",
+            musical_style=MusicalStyle.POP
+        )
+        payload = controller._prepare_mix_enhance_payload(request)
+        assert "previewStartTime" not in payload["mixReviveData"]

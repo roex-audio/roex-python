@@ -52,6 +52,8 @@ class EnhanceController:
                 - `loudness_preference` (LoudnessPreference): Target loudness.
                 - `stem_processing` (bool): If True, generate stems (preview not guaranteed to contain full stems).
                 - `webhook_url` (Optional[str]): URL for task completion notification.
+                - `preview_start_time` (Optional[float]): If provided (>= 0), the 30-second
+                  preview starts at this offset (seconds) instead of auto-selecting by RMS energy.
 
         Returns:
             MixEnhanceResponse: An object containing:
@@ -122,6 +124,8 @@ class EnhanceController:
                 - `loudness_preference` (LoudnessPreference): Target loudness.
                 - `stem_processing` (bool): If True, also generate stems (vocals, bass, drums, other).
                 - `webhook_url` (Optional[str]): URL for task completion notification.
+                - `preview_start_time` (Optional[float]): If provided (>= 0), the 30-second
+                  preview starts at this offset (seconds) instead of auto-selecting by RMS energy.
 
         Returns:
             MixEnhanceResponse: An object containing:
@@ -269,4 +273,6 @@ class EnhanceController:
         }
         if request.webhook_url is not None:
             data["webhookURL"] = request.webhook_url
+        if request.preview_start_time is not None:
+            data["previewStartTime"] = request.preview_start_time
         return {"mixReviveData": data}

@@ -50,6 +50,9 @@ class MasteringController:
             request (MasteringRequest): An object containing the track URL and
                 mastering parameters (MusicalStyle, DesiredLoudness, etc.).
                 The track URL must point to an accessible WAV or FLAC file.
+                Optionally includes ``preview_start_time`` (float, >= 0) to set
+                the offset in seconds where the 30-second preview begins, instead
+                of auto-selecting by highest RMS energy.
 
         Returns:
             MasteringTaskResponse: An object containing the unique `mastering_task_id`
@@ -93,6 +96,8 @@ class MasteringController:
         }
         if request.webhook_url is not None:
             data["webhookURL"] = request.webhook_url
+        if request.preview_start_time is not None:
+            data["previewStartTime"] = request.preview_start_time
         payload = {"masteringData": data}
 
         try:

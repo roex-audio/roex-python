@@ -79,6 +79,63 @@ class TestCreateMasteringPreview:
         payload = call_args[0][1]
         assert payload["masteringData"]["webhookURL"] == "https://example.com/webhook"
     
+    def test_with_preview_start_time(self, mock_api_provider):
+        """Test mastering preview includes previewStartTime in API payload"""
+        mock_api_provider.post.return_value = {
+            "mastering_task_id": "task_789"
+        }
+
+        controller = MasteringController(mock_api_provider)
+        request = MasteringRequest(
+            track_url="https://example.com/track.wav",
+            musical_style=MusicalStyle.POP,
+            desired_loudness=DesiredLoudness.MEDIUM,
+            preview_start_time=45.0
+        )
+
+        result = controller.create_mastering_preview(request)
+
+        assert result.mastering_task_id == "task_789"
+        payload = mock_api_provider.post.call_args[0][1]
+        assert payload["masteringData"]["previewStartTime"] == 45.0
+
+    def test_preview_start_time_zero_is_included(self, mock_api_provider):
+        """Test that previewStartTime=0 is included (not treated as falsy)"""
+        mock_api_provider.post.return_value = {
+            "mastering_task_id": "task_zero"
+        }
+
+        controller = MasteringController(mock_api_provider)
+        request = MasteringRequest(
+            track_url="https://example.com/track.wav",
+            musical_style=MusicalStyle.POP,
+            desired_loudness=DesiredLoudness.MEDIUM,
+            preview_start_time=0.0
+        )
+
+        controller.create_mastering_preview(request)
+
+        payload = mock_api_provider.post.call_args[0][1]
+        assert payload["masteringData"]["previewStartTime"] == 0.0
+
+    def test_preview_start_time_omitted_when_none(self, mock_api_provider):
+        """Test that previewStartTime is NOT in the payload when not set (backward compat)"""
+        mock_api_provider.post.return_value = {
+            "mastering_task_id": "task_compat"
+        }
+
+        controller = MasteringController(mock_api_provider)
+        request = MasteringRequest(
+            track_url="https://example.com/track.wav",
+            musical_style=MusicalStyle.POP,
+            desired_loudness=DesiredLoudness.MEDIUM
+        )
+
+        controller.create_mastering_preview(request)
+
+        payload = mock_api_provider.post.call_args[0][1]
+        assert "previewStartTime" not in payload["masteringData"]
+
     def test_http_error_handling(self, mock_api_provider):
         """Test error handling when API returns HTTP error"""
         # Setup
