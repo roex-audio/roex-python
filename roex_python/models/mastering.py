@@ -27,6 +27,10 @@ class MasteringRequest:
     """str: The desired sample rate for the output mastered file. Defaults to "44100" Hz."""
     webhook_url: Optional[str] = None
     """Optional[str]: A URL to which a notification will be sent upon task completion."""
+    preview_start_time: Optional[float] = None
+    """Optional[float]: When provided (>= 0), the 30-second preview starts at this offset in seconds
+    instead of being auto-selected based on highest energy (RMS). If the value exceeds the track
+    duration, the API clamps it to produce a valid segment. Omit to preserve default behavior."""
 
 
 @dataclass

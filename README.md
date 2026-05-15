@@ -127,7 +127,8 @@ mastering_request = MasteringRequest(
     track_url=uploaded_mixdown_url,
     musical_style=MusicalStyle.ROCK_INDIE,
     desired_loudness=DesiredLoudness.MEDIUM,
-    sample_rate="44100" # Match the source file's sample rate
+    sample_rate="44100", # Match the source file's sample rate
+    preview_start_time=30.0  # Optional: start the 30s preview at 30 seconds (omit for auto RMS-based selection)
 )
 
 # Create mastering preview task
@@ -136,11 +137,12 @@ print(f"Mastering task submitted. Task ID: {task.mastering_task_id}")
 
 # Retrieve the preview master (polls until ready)
 preview = client.mastering.retrieve_preview_master(task.mastering_task_id)
-print(f"Preview Master URL: {preview.get('download_url_mastered_preview')}")
+print(f"Preview Master URL: {preview.download_url_mastered_preview}")
+print(f"Preview starts at: {preview.preview_start_time}s")
 
 # Optionally, retrieve the final master (polls until ready)
-final_url = client.mastering.retrieve_final_master(task.mastering_task_id)
-print(f"Final Master URL: {final_url}")
+final_result = client.mastering.retrieve_final_master(task.mastering_task_id)
+print(f"Final Master URL: {final_result.download_url_mastered}")
 ```
 
 **Output:** Returns task IDs and download URLs for the mastered preview and final audio files.
@@ -180,7 +182,7 @@ print("Analysis Results:", analysis_results)
 Enhance an existing mix using AI. If using a local file, it must be uploaded first.
 
 ```python
-from roex_python.models import EnhanceMixRequest
+from roex_python.models import MixEnhanceRequest, EnhanceMusicalStyle, LoudnessPreference
 
 # Assuming 'client' is an initialized RoExClient
 # And 'upload_file' is a helper function like the one in examples/common.py or roex_python.utils
@@ -190,17 +192,21 @@ mix_to_enhance_local_path = "/path/to/your/mix_to_enhance.wav"
 uploaded_enhance_url = upload_file(client, mix_to_enhance_local_path)
 
 # Step 2: Use the obtained URL in the request
-enhance_request = EnhanceMixRequest(
-    track_url=uploaded_enhance_url
+enhance_request = MixEnhanceRequest(
+    audio_file_location=uploaded_enhance_url,
+    musical_style=EnhanceMusicalStyle.POP,
+    loudness_preference=LoudnessPreference.STREAMING_LOUDNESS,
+    preview_start_time=45.0  # Optional: start the 30s preview at 45 seconds (omit for auto RMS-based selection)
 )
 
-# Submit enhancement task
-task = client.enhance.create_enhancement(enhance_request)
-print(f"Enhancement task submitted. Task ID: {task.enhance_task_id}")
+# Submit enhancement preview task
+task = client.enhance.create_mix_enhance_preview(enhance_request)
+print(f"Enhancement task submitted. Task ID: {task.mixrevive_task_id}")
 
-# Retrieve enhanced mix (polls until ready)
-enhanced_mix = client.enhance.retrieve_enhancement(task.enhance_task_id)
-print(f"Enhanced Mix URL: {enhanced_mix.get('download_url_enhanced_mix')}")
+# Retrieve enhanced preview (polls until ready)
+result = client.enhance.retrieve_enhanced_track(task.mixrevive_task_id)
+print(f"Enhanced Preview URL: {result.download_url_preview_revived}")
+print(f"Preview starts at: {result.preview_start_time}s")
 ```
 
 **Output:** Returns a task ID and the download URL for the enhanced audio file and it's stems if requested.
