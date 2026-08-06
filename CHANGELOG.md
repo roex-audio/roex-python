@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-08-06
+
+### Added
+- **Stem Separation ("StemFlow")**: New `client.stem_separation` controller for splitting a full mix into isolated `vocals`, `bass`, `drums`, and `other` stems
+  - `create_separation()`, `get_separation_status()`, `wait_for_separation()`, `retrieve_stems()`
+  - New models: `StemSeparationRequest`, `StemSeparationTaskResponse`, `StemSeparationStatusResult`, `SeparatedStemsResult`
+  - Submitting a task reserves 75 credits; captured on success, refunded automatically on failure
+- **Stem Recombination ("Recombine")**: New `client.recombine` controller for remixing/mastering an isolated vocal with a backing track
+  - `create_recombine()`, `get_recombine_status()`, `wait_for_recombine()`, `retrieve_preview()`, `retrieve_final_master()`
+  - New models: `RecombineMusicalStyle` (20 styles), `RecombineRequest`, `RecombineTaskResponse`, `RecombineStatusResult`, `RecombinePreviewResult`, `RecombineProcessingInfo`, `RecombineFinalResult`
+  - Supports two mutually-exclusive input modes: reuse a prior separation job via `stem_job_id`, or supply `vocal_stem_url` + `backing_stem_url` directly
+  - Submitting is free; retrieving the final master charges 250 credits the first time it succeeds, and is safe to call again afterwards (no re-charge)
+- New example: `examples/stem_separation_recombine_example.py` covering both the separate-then-recombine and direct-recombine workflows
+- 46 new unit tests and 6 new (skipped-by-default, credit-consuming) integration tests covering both controllers
+
+### Fixed
+- Synchronized package version declarations across `setup.py` and `conf.py`, which had drifted behind `pyproject.toml`/`__init__.py`
+
 ## [1.3.2] - 2026-04-21
 
 ### Fixed
@@ -127,6 +145,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Asynchronous task polling
 - Secure file upload/download
 
+[1.5.0]: https://github.com/roexaudio/roex-python/compare/v1.4.0...v1.5.0
 [1.3.2]: https://github.com/roexaudio/roex-python/compare/v1.3.1...v1.3.2
 [1.3.1]: https://github.com/roexaudio/roex-python/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/roexaudio/roex-python/compare/v1.2.1...v1.3.0

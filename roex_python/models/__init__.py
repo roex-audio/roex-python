@@ -68,6 +68,25 @@ from roex_python.models.audio_cleanup import (
     SoundSource
 )
 
+# Import stem separation ("StemFlow") models
+from roex_python.models.stemflow import (
+    StemSeparationRequest,
+    StemSeparationTaskResponse,
+    StemSeparationStatusResult,
+    SeparatedStemsResult
+)
+
+# Import recombine models
+from roex_python.models.recombine import (
+    RecombineMusicalStyle,
+    RecombineRequest,
+    RecombineTaskResponse,
+    RecombineStatusResult,
+    RecombinePreviewResult,
+    RecombineProcessingInfo,
+    RecombineFinalResult
+)
+
 __all__ = [
     # Common models
     "DesiredLoudness",
@@ -119,5 +138,20 @@ __all__ = [
     "AudioCleanupData",
     "AudioCleanupResults",
     "AudioCleanupResponse",
-    "SoundSource"
+    "SoundSource",
+
+    # StemFlow (stem separation) models
+    "StemSeparationRequest",
+    "StemSeparationTaskResponse",
+    "StemSeparationStatusResult",
+    "SeparatedStemsResult",
+
+    # Recombine models
+    "RecombineMusicalStyle",
+    "RecombineRequest",
+    "RecombineTaskResponse",
+    "RecombineStatusResult",
+    "RecombinePreviewResult",
+    "RecombineProcessingInfo",
+    "RecombineFinalResult"
 ]

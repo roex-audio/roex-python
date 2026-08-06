@@ -2,7 +2,7 @@
 
 ## Quick Start
 
-This project has a comprehensive test suite with 119 unit tests and 13 integration tests.
+This project has a comprehensive test suite with 203 unit tests and 17 integration tests.
 
 ### Running Tests
 
@@ -26,7 +26,7 @@ export ROEX_API_KEY="your_api_key"
 ```
 tests/
 ├── conftest.py              # Shared fixtures
-├── unit/                    # Unit tests (119 tests, 95% coverage)
+├── unit/                    # Unit tests (203 tests)
 │   ├── test_models.py       # Model validation
 │   ├── test_utils.py        # Utility functions
 │   ├── test_api_provider.py # API communication
@@ -37,14 +37,18 @@ tests/
 │       ├── test_analysis_controller.py
 │       ├── test_enhance_controller.py
 │       ├── test_audio_cleanup_controller.py
-│       └── test_upload_controller.py
-└── integration/             # Integration tests (13 tests)
+│       ├── test_upload_controller.py
+│       ├── test_stemflow_controller.py
+│       └── test_recombine_controller.py
+└── integration/             # Integration tests (17 tests)
     ├── test_upload_integration.py
     ├── test_analysis_integration.py
     ├── test_mastering_integration.py
     ├── test_mix_integration.py
     ├── test_enhance_integration.py
-    └── test_audio_cleanup_integration.py
+    ├── test_audio_cleanup_integration.py
+    ├── test_stemflow_integration.py       # Skipped by default (GPU time + 75 credits)
+    └── test_recombine_integration.py      # Skipped by default (250 credits on final retrieval)
 ```
 
 ### Requirements
@@ -57,7 +61,7 @@ pip install -r requirements-dev.txt
 
 ### Coverage
 
-Current test coverage: **95%** (702/742 lines)
+Current test coverage: **95%** (1240/1310 lines)
 
 ```bash
 # Generate coverage report

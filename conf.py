@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.abspath('.')) # Point Sphinx to the project root
 project = 'roex-python'
 copyright = '2025, RoEx LTD'
 author = 'RoEx LTD'
-release = '1.2'
+release = '1.5.0'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

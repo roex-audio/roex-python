@@ -8,6 +8,8 @@ from .controllers.analysis_controller import AnalysisController
 from .controllers.enhance_controller import EnhanceController
 from .controllers.audio_cleanup_controller import AudioCleanupController
 from .controllers.upload_controller import UploadController
+from .controllers.stemflow_controller import StemFlowController
+from .controllers.recombine_controller import RecombineController
 from .providers.api_provider import ApiProvider
 import logging
 
@@ -27,6 +29,12 @@ class RoExClient:
     - `enhance`: Mix enhancement.
     - `audio_cleanup`: Audio source cleanup.
     - `upload`: File upload helpers (getting signed URLs).
+    - `stem_separation`: Stem separation ("StemFlow") -- splitting a mix into
+          vocals/bass/drums/other stems.
+          * create_separation(), get_separation_status(), wait_for_separation(), retrieve_stems()
+    - `recombine`: Stem recombination -- remixing/mastering a vocal with a backing track.
+          * create_recombine(), get_recombine_status(), wait_for_recombine(),
+            retrieve_preview(), retrieve_final_master()
 
     Authentication is handled via an API key.
 
@@ -38,6 +46,8 @@ class RoExClient:
         enhance (EnhanceController): Controller for enhancement operations.
         audio_cleanup (AudioCleanupController): Controller for cleanup operations.
         upload (UploadController): Controller for file upload operations.
+        stem_separation (StemFlowController): Controller for stem separation operations.
+        recombine (RecombineController): Controller for stem recombination operations.
 
     Example:
         >>> from roex_python.client import RoExClient
@@ -82,6 +92,8 @@ class RoExClient:
         self.enhance = EnhanceController(self.api_provider)
         self.audio_cleanup = AudioCleanupController(self.api_provider)
         self.upload = UploadController(self.api_provider)
+        self.stem_separation = StemFlowController(self.api_provider)
+        self.recombine = RecombineController(self.api_provider)
 
     def health_check(self) -> str:
         """
