@@ -160,8 +160,11 @@ class StemFlowController:
             >>> client.stem_separation.wait_for_separation(task.stemflow_task_id)
             >>> stems = client.stem_separation.retrieve_stems(task.stemflow_task_id)
         """
-        attempts = max(1, timeout // poll_interval)
-        for attempt in range(attempts):
+        # One check happens up front, then one more after each sleep, so the
+        # last check lands at (or just after) the deadline itself instead of
+        # `max_sleeps` sleeps being spent without ever re-checking status.
+        max_sleeps = max(1, timeout // poll_interval)
+        for attempt in range(max_sleeps + 1):
             result = self.get_separation_status(stemflow_task_id)
 
             if result.status == "complete":
@@ -174,11 +177,12 @@ class StemFlowController:
                     f"{result.info or result.message}"
                 )
 
-            logger.debug(
-                f"Stem separation task {stemflow_task_id} still processing "
-                f"(attempt {attempt + 1}/{attempts})."
-            )
-            time.sleep(poll_interval)
+            if attempt < max_sleeps:
+                logger.debug(
+                    f"Stem separation task {stemflow_task_id} still processing "
+                    f"(attempt {attempt + 1}/{max_sleeps + 1})."
+                )
+                time.sleep(poll_interval)
 
         logger.error(f"Stem separation task {stemflow_task_id} did not complete after polling.")
         raise Exception(

@@ -238,7 +238,11 @@ class TestWaitForRecombine:
 
     @patch('roex_python.controllers.recombine_controller.time.sleep')
     def test_polling_timeout(self, mock_sleep, mock_api_provider):
-        """Test polling timeout after max attempts when stuck processing"""
+        """Test polling timeout after max attempts when stuck processing.
+
+        With timeout=3 and poll_interval=1, there are 3 sleeps but 4 checks:
+        one up front, then one after each sleep -- so the final check lands
+        at the deadline itself instead of being skipped."""
         mock_api_provider.get.return_value = {
             "recombineTaskId": "rc_task_123",
             "status": "processing",
@@ -250,7 +254,26 @@ class TestWaitForRecombine:
         with pytest.raises(Exception, match="did not complete after polling"):
             controller.wait_for_recombine("rc_task_123", poll_interval=1, timeout=3)
 
-        assert mock_api_provider.get.call_count == 3
+        assert mock_api_provider.get.call_count == 4
+        assert mock_sleep.call_count == 3
+
+    @patch('roex_python.controllers.recombine_controller.time.sleep')
+    def test_polls_at_the_deadline_before_giving_up(self, mock_sleep, mock_api_provider):
+        """Test that a task completing on the final allowed check (the one
+        after the last sleep) is reported as complete, not as timed out."""
+        mock_api_provider.get.side_effect = [
+            {"recombineTaskId": "rc_task_123", "status": "processing", "error": False},
+            {"recombineTaskId": "rc_task_123", "status": "processing", "error": False},
+            {"recombineTaskId": "rc_task_123", "status": "processing", "error": False},
+            {"recombineTaskId": "rc_task_123", "status": "complete", "error": False},
+        ]
+
+        controller = RecombineController(mock_api_provider)
+        result = controller.wait_for_recombine("rc_task_123", poll_interval=1, timeout=3)
+
+        assert result.status == "complete"
+        assert mock_api_provider.get.call_count == 4
+        assert mock_sleep.call_count == 3
 
 
 @pytest.mark.unit
