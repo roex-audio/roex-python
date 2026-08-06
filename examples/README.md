@@ -54,6 +54,12 @@ Here's a summary of the available examples and their usage:
     *   Purpose: Enhances a single audio mix file (WAV, FLAC, MP3).
     *   Usage: `python enhance_example.py <path_to_audio_file>`
 
+*   **`stem_separation_recombine_example.py`**:
+    *   Purpose: Separates a full mix into `vocals`/`bass`/`drums`/`other` stems, then recombines the vocal with the (summed) backing track into a remixed and mastered result. Also supports recombining directly from a pre-separated vocal + backing/beat track, skipping separation entirely.
+    *   Usage (Separate then Recombine): `python stem_separation_recombine_example.py <path_to_audio_file>`
+    *   Usage (Direct Recombine): `python stem_separation_recombine_example.py --direct <path_to_vocal_file> <path_to_backing_file>`
+    *   Billing note: separation reserves 75 credits (captured on success, refunded on failure); the final recombine master charges 250 credits on first successful retrieval.
+
 *   **`mastering_example.py`**: 
     *   Purpose: Masters a single track or multiple tracks as an album (WAV, FLAC, MP3).
     *   Usage (Single Track): `python mastering_example.py <path_to_track>`

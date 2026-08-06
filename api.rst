@@ -44,6 +44,16 @@ Controllers
    :undoc-members:
    :show-inheritance:
 
+.. automodule:: roex_python.controllers.stemflow_controller
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: roex_python.controllers.recombine_controller
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Providers
 ---------
 
@@ -81,6 +91,16 @@ Models
    :show-inheritance:
 
 .. automodule:: roex_python.models.audio_cleanup
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: roex_python.models.stemflow
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: roex_python.models.recombine
    :members:
    :undoc-members:
    :show-inheritance:

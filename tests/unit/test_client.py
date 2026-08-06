@@ -7,7 +7,8 @@ from unittest.mock import Mock, patch
 from roex_python.client import RoExClient
 from roex_python.controllers import (
     MixController, MasteringController, AnalysisController,
-    EnhanceController, UploadController
+    EnhanceController, UploadController, StemFlowController,
+    RecombineController
 )
 from roex_python.controllers.audio_cleanup_controller import AudioCleanupController
 
@@ -42,6 +43,8 @@ class TestRoExClientInit:
         assert isinstance(client.enhance, EnhanceController)
         assert isinstance(client.audio_cleanup, AudioCleanupController)
         assert isinstance(client.upload, UploadController)
+        assert isinstance(client.stem_separation, StemFlowController)
+        assert isinstance(client.recombine, RecombineController)
     
     def test_controllers_share_api_provider(self):
         """Test that all controllers share the same ApiProvider instance"""
@@ -54,6 +57,8 @@ class TestRoExClientInit:
         assert client.enhance.api_provider is client.api_provider
         assert client.audio_cleanup.api_provider is client.api_provider
         assert client.upload.api_provider is client.api_provider
+        assert client.stem_separation.api_provider is client.api_provider
+        assert client.recombine.api_provider is client.api_provider
 
 
 @pytest.mark.unit

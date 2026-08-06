@@ -14,6 +14,8 @@ This pip package is designed to work with the [RoEx Tonn API](https://tonn-porta
 - **Mix Analysis**: Analyze and compare audio mixes
 - **Mix Enhancement**: Enhance and improve existing mixes
 - **Audio Cleanup**: Clean up specific instrument tracks (vocals, guitars, etc.)
+- **Stem Separation**: Split a full mix into isolated vocals/bass/drums/other stems
+- **Stem Recombination**: Remix and master an isolated vocal with a backing track
 - **Asynchronous Processing**: Built-in polling for long-running tasks
 - **Secure File Uploads**: Uses temporary signed URLs for direct and secure uploads to cloud storage.
 - **File Downloads**: Easily download processed audio files
@@ -244,6 +246,54 @@ print("Cleanup Results:", cleanup_results)
 
 **Output:** A dictionary containing status information and potentially details about the cleanup process. The primary result is often implicitly the cleaned audio accessible via a related process or understanding, though the API might provide specific output URLs depending on future implementation.
 
+### 6. Stem Separation and Recombination
+
+Split a full mix into isolated stems, then recombine the vocal with the backing track into a remixed and mastered result. If using a local file, it must be uploaded first.
+
+```python
+from roex_python.models import (
+    StemSeparationRequest, RecombineRequest, RecombineMusicalStyle, DesiredLoudness
+)
+
+# Assuming 'client' is an initialized RoExClient
+# And 'upload_file' is a helper function like the one in examples/common.py or roex_python.utils
+
+# Step 1: Upload local file and submit separation
+song_local_path = "/path/to/your/song.wav"
+song_url = upload_file(client, song_local_path)
+
+separation_task = client.stem_separation.create_separation(
+    StemSeparationRequest(audio_file_location=song_url)
+)
+
+# Step 2: Wait for separation (polls until ready; runs on a GPU worker)
+client.stem_separation.wait_for_separation(separation_task.stemflow_task_id)
+stems = client.stem_separation.retrieve_stems(separation_task.stemflow_task_id)
+print(f"Vocals stem: {stems.vocals}")
+
+# Step 3: Recombine the vocal with the (summed) backing track from the same job
+recombine_task = client.recombine.create_recombine(
+    RecombineRequest(
+        stem_job_id=separation_task.stemflow_task_id,
+        musical_style=RecombineMusicalStyle.POP,
+        desired_loudness=DesiredLoudness.MEDIUM,
+        vocal_gain_db=0.0  # Optional: -6.0 to +6.0
+    )
+)
+client.recombine.wait_for_recombine(recombine_task.recombine_task_id)
+
+# Free preview (~30s MP3), then the final mastered WAV (charges 250 credits once)
+preview = client.recombine.retrieve_preview(recombine_task.recombine_task_id)
+final_result = client.recombine.retrieve_final_master(recombine_task.recombine_task_id)
+print(f"Final Master URL: {final_result.master_url}")
+```
+
+**Direct recombine (skip separation):** provide `vocal_stem_url` and `backing_stem_url` on `RecombineRequest` instead of `stem_job_id` if you already have an isolated vocal and a backing/beat track.
+
+**`RecombineMusicalStyle` options:** `ROCK_INDIE`, `POP`, `ACOUSTIC`, `HIPHOP_GRIME`, `ELECTRONIC`, `REGGAE_DUB`, `ORCHESTRAL`, `METAL`, `OTHER`, `JAZZ`, `LO_FI`, `LATIN`, `TECHNO`, `HOUSE`, `TRAP`, `COUNTRY_ACOUSTIC`, `CINEMATIC`, `AFROBEAT`, `K_POP`, `REGGAETON`.
+
+**Output:** Separated stem URLs, a free preview URL, and a final mastered master URL. **Billing:** separation reserves 75 credits (captured on success, refunded on failure); the final master charges 250 credits the first time it's retrieved.
+
 ## Handling Local Files
 
 The RoEx API endpoints require URLs pointing to audio files. If you are working with local files (e.g., `.wav` or `.flac` on your computer), you need to upload them first to obtain a URL that the API can access.
@@ -269,6 +319,7 @@ Refer to the scripts in the `examples/` directory for complete, runnable demonst
     -   `analysis_example.py`: Provides an example of analyzing a mix or master.
     -   `enhance_example.py`: Illustrates enhancing an existing mix.
     -   `audio_cleanup_example.py`: Shows how to use the audio cleanup feature for specific instrument types.
+    -   `stem_separation_recombine_example.py`: Demonstrates separating a mix into stems and recombining them (or a direct vocal + backing track) into a remixed master.
     *Note: Example scripts require the `soundfile` and `numpy` libraries (`pip install soundfile numpy`).*
 -   **Package Reference**: Detailed information about the Python classes, methods, and models provided by this package can be found in the docstrings within the source code.
 
@@ -318,7 +369,7 @@ preview = client.mix.retrieve_preview_mix(mix_task.multitrack_task_id)
 
 ## Testing
 
-This package includes a comprehensive test suite with 119 unit tests and 13 integration tests, achieving 95% code coverage.
+This package includes a comprehensive test suite with 203 unit tests and 17 integration tests, achieving 95% code coverage.
 
 ### Running Tests
 

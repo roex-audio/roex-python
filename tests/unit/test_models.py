@@ -23,7 +23,16 @@ from roex_python.models import (
     MixAnalysisRequest, AnalysisMusicalStyle,
     
     # Enhance models
-    MixEnhanceRequest, MixEnhanceResponse, EnhanceMusicalStyle
+    MixEnhanceRequest, MixEnhanceResponse, EnhanceMusicalStyle,
+
+    # StemFlow (stem separation) models
+    StemSeparationRequest, StemSeparationTaskResponse,
+    StemSeparationStatusResult, SeparatedStemsResult,
+
+    # Recombine models
+    RecombineMusicalStyle, RecombineRequest, RecombineTaskResponse,
+    RecombineStatusResult, RecombinePreviewResult, RecombineFinalResult,
+    RecombineProcessingInfo
 )
 
 # Audio cleanup models are separate
@@ -366,6 +375,167 @@ class TestAudioCleanupModels:
     def test_sound_source_brass(self):
         """Test SoundSource includes BRASS_GROUP"""
         assert SoundSource.BRASS_GROUP.value == "BRASS_GROUP"
+
+
+class TestStemFlowModels:
+    """Test stem separation ("StemFlow") models"""
+
+    def test_stem_separation_request(self):
+        """Test StemSeparationRequest creation"""
+        request = StemSeparationRequest(audio_file_location="https://example.com/song.wav")
+        assert request.audio_file_location == "https://example.com/song.wav"
+
+    def test_stem_separation_task_response_defaults(self):
+        """Test StemSeparationTaskResponse defaults"""
+        response = StemSeparationTaskResponse(stemflow_task_id="sf_task_123")
+        assert response.stemflow_task_id == "sf_task_123"
+        assert response.error is False
+        assert response.message == ""
+
+    def test_stem_separation_status_result(self):
+        """Test StemSeparationStatusResult creation"""
+        result = StemSeparationStatusResult(
+            stemflow_task_id="sf_task_123",
+            status="failed",
+            error=True,
+            info="worker crashed"
+        )
+        assert result.status == "failed"
+        assert result.error is True
+        assert result.info == "worker crashed"
+
+    def test_separated_stems_result_defaults(self):
+        """Test SeparatedStemsResult defaults to all-None"""
+        result = SeparatedStemsResult()
+        assert result.vocals is None
+        assert result.bass is None
+        assert result.drums is None
+        assert result.other is None
+
+    def test_separated_stems_result_with_urls(self):
+        """Test SeparatedStemsResult with all four stem URLs set"""
+        result = SeparatedStemsResult(
+            vocals="https://example.com/vocals.wav",
+            bass="https://example.com/bass.wav",
+            drums="https://example.com/drums.wav",
+            other="https://example.com/other.wav"
+        )
+        assert result.vocals == "https://example.com/vocals.wav"
+        assert result.bass == "https://example.com/bass.wav"
+        assert result.drums == "https://example.com/drums.wav"
+        assert result.other == "https://example.com/other.wav"
+
+
+class TestRecombineModels:
+    """Test stem recombination ("Recombine") models"""
+
+    def test_recombine_musical_style_has_all_20_values(self):
+        """Test RecombineMusicalStyle includes the wider style set beyond MusicalStyle"""
+        expected = [
+            "ROCK_INDIE", "POP", "ACOUSTIC", "HIPHOP_GRIME", "ELECTRONIC",
+            "REGGAE_DUB", "ORCHESTRAL", "METAL", "OTHER", "JAZZ", "LO_FI",
+            "LATIN", "TECHNO", "HOUSE", "TRAP", "COUNTRY_ACOUSTIC",
+            "CINEMATIC", "AFROBEAT", "K_POP", "REGGAETON"
+        ]
+        member_values = [m.value for m in RecombineMusicalStyle]
+        assert sorted(member_values) == sorted(expected)
+        assert len(member_values) == 20
+
+    def test_recombine_request_via_stem_job_id(self):
+        """Test RecombineRequest with stem_job_id and default loudness/gain"""
+        request = RecombineRequest(
+            stem_job_id="sf_task_123",
+            musical_style=RecombineMusicalStyle.POP
+        )
+        assert request.stem_job_id == "sf_task_123"
+        assert request.vocal_stem_url is None
+        assert request.backing_stem_url is None
+        assert request.desired_loudness == DesiredLoudness.MEDIUM
+        assert request.vocal_gain_db == 0.0
+
+    def test_recombine_request_via_direct_urls(self):
+        """Test RecombineRequest with direct vocal + backing URLs"""
+        request = RecombineRequest(
+            vocal_stem_url="https://example.com/vocal.wav",
+            backing_stem_url="https://example.com/backing.wav",
+            musical_style=RecombineMusicalStyle.TRAP,
+            desired_loudness=DesiredLoudness.HIGH,
+            vocal_gain_db=-4.5
+        )
+        assert request.stem_job_id is None
+        assert request.vocal_stem_url == "https://example.com/vocal.wav"
+        assert request.backing_stem_url == "https://example.com/backing.wav"
+        assert request.vocal_gain_db == -4.5
+
+    def test_recombine_request_rejects_neither_mode(self):
+        """Test that RecombineRequest requires either stem_job_id or both URLs"""
+        with pytest.raises(ValueError):
+            RecombineRequest(musical_style=RecombineMusicalStyle.POP)
+
+    def test_recombine_request_rejects_both_modes(self):
+        """Test that RecombineRequest rejects stem_job_id combined with direct URLs"""
+        with pytest.raises(ValueError):
+            RecombineRequest(
+                stem_job_id="sf_task_123",
+                vocal_stem_url="https://example.com/vocal.wav",
+                backing_stem_url="https://example.com/backing.wav",
+                musical_style=RecombineMusicalStyle.POP
+            )
+
+    def test_recombine_request_rejects_out_of_range_gain(self):
+        """Test that vocal_gain_db outside -6.0..+6.0 is rejected"""
+        with pytest.raises(ValueError):
+            RecombineRequest(
+                stem_job_id="sf_task_123",
+                musical_style=RecombineMusicalStyle.POP,
+                vocal_gain_db=10.0
+            )
+
+    def test_recombine_task_response(self):
+        """Test RecombineTaskResponse creation"""
+        response = RecombineTaskResponse(recombine_task_id="rc_task_123")
+        assert response.recombine_task_id == "rc_task_123"
+        assert response.error is False
+
+    def test_recombine_status_result(self):
+        """Test RecombineStatusResult creation"""
+        result = RecombineStatusResult(
+            recombine_task_id="rc_task_123",
+            status="complete"
+        )
+        assert result.status == "complete"
+
+    def test_recombine_preview_result(self):
+        """Test RecombinePreviewResult creation"""
+        result = RecombinePreviewResult(
+            preview_url="https://example.com/preview.mp3",
+            preview_start_seconds=42.5,
+            measured_lufs_full=-13.4
+        )
+        assert result.preview_url == "https://example.com/preview.mp3"
+        assert result.preview_start_seconds == 42.5
+        assert result.measured_lufs_full == -13.4
+
+    def test_recombine_final_result_with_processing(self):
+        """Test RecombineFinalResult with nested processing info"""
+        result = RecombineFinalResult(
+            master_url="https://example.com/master.wav",
+            measured_lufs=-13.4,
+            processing=RecombineProcessingInfo(
+                musical_style="POP",
+                desired_loudness="MEDIUM",
+                vocal_gain_db=0.0
+            )
+        )
+        assert result.master_url == "https://example.com/master.wav"
+        assert result.processing.musical_style == "POP"
+        assert result.processing.vocal_gain_db == 0.0
+
+    def test_recombine_final_result_defaults(self):
+        """Test RecombineFinalResult defaults to all-None"""
+        result = RecombineFinalResult()
+        assert result.master_url is None
+        assert result.processing is None
 
 
 @pytest.mark.unit
