@@ -424,6 +424,20 @@ class TestPreparePayload:
         assert data["vocalGainDb"] == -2.5
         assert "vocalStemURL" not in data
         assert "backingStemURL" not in data
+        assert "webhookURL" not in data  # absent when webhook_url is not set
+
+    def test_payload_includes_webhook_url_when_set(self, mock_api_provider):
+        """Test that webhookURL is included in the payload when webhook_url is set"""
+        controller = RecombineController(mock_api_provider)
+        request = RecombineRequest(
+            stem_job_id="sf_task_123",
+            musical_style=RecombineMusicalStyle.POP,
+            webhook_url="https://example.com/hook"
+        )
+
+        payload = controller._prepare_recombine_payload(request)
+        data = payload["recombineData"]
+        assert data["webhookURL"] == "https://example.com/hook"
 
     def test_payload_structure_via_direct_urls(self, mock_api_provider):
         """Test payload structure when using direct vocal/backing URLs"""

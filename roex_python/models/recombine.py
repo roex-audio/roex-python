@@ -69,6 +69,9 @@ class RecombineRequest:
     """DesiredLoudness: The target loudness preset for the final master. Defaults to MEDIUM."""
     vocal_gain_db: float = 0.0
     """float: Gain applied to the vocal stem in dB, from -6.0 to +6.0. Defaults to 0.0."""
+    webhook_url: Optional[str] = None
+    """Optional[str]: A URL to receive async status notifications for this
+    recombine job (pending/started/completed/failed)."""
 
     def __post_init__(self):
         has_stem_job = self.stem_job_id is not None
