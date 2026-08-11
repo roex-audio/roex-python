@@ -16,6 +16,13 @@ class StemSeparationRequest:
     audio_file_location: str
     """str: The URL of the audio file (WAV or FLAC) to be separated into stems.
     Must be accessible by the RoEx API."""
+    separation_mode: Optional[str] = None
+    """Optional[str]: The separation mode. ``"all_stems"`` (default) returns four
+    stems (vocals, drums, bass, other); ``"vocals_instrumental"`` returns two
+    stems (vocals + a single instrumental/no-vocals backing stem)."""
+    webhook_url: Optional[str] = None
+    """Optional[str]: A URL to receive async status notifications for this
+    separation job (pending/started/completed/failed)."""
 
 
 @dataclass
@@ -61,6 +68,9 @@ class SeparatedStemsResult:
     """
     vocals: Optional[str] = None
     """Optional[str]: Signed URL for the isolated vocal stem."""
+    instrumental: Optional[str] = None
+    """Optional[str]: Signed URL for the instrumental (no-vocals) backing stem.
+    Populated only when ``separation_mode="vocals_instrumental"`` was used."""
     bass: Optional[str] = None
     """Optional[str]: Signed URL for the isolated bass stem."""
     drums: Optional[str] = None

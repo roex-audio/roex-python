@@ -49,6 +49,35 @@ class TestCreateSeparation:
             "stemflowData": {"audioFileLocation": "https://example.com/song.wav"}
         }
 
+    def test_successful_creation_two_stem_mode_and_webhook(self, mock_api_provider):
+        """Test successful creation with separation_mode and webhook_url"""
+        mock_api_provider.post.return_value = {
+            "stemflowTaskId": "sf_task_124",
+            "error": False,
+            "message": "Successfully created stem separation task."
+        }
+
+        controller = StemFlowController(mock_api_provider)
+        request = StemSeparationRequest(
+            audio_file_location="https://example.com/song.wav",
+            separation_mode="vocals_instrumental",
+            webhook_url="https://example.com/hook",
+        )
+
+        result = controller.create_separation(request)
+
+        assert result.stemflow_task_id == "sf_task_124"
+
+        call_args = mock_api_provider.post.call_args
+        assert call_args[0][0] == "/separate"
+        assert call_args[0][1] == {
+            "stemflowData": {
+                "audioFileLocation": "https://example.com/song.wav",
+                "separationMode": "vocals_instrumental",
+                "webhookURL": "https://example.com/hook",
+            }
+        }
+
     def test_http_error_handling(self, mock_api_provider):
         """Test error handling when API returns HTTP error (e.g. insufficient credits)"""
         mock_api_provider.post.side_effect = requests.HTTPError("402 Payment Required")
@@ -243,6 +272,31 @@ class TestRetrieveStems:
         call_args = mock_api_provider.post.call_args
         assert call_args[0][0] == "/retrievestems"
         assert call_args[0][1] == {"stemflowData": {"stemflowTaskId": "sf_task_123"}}
+
+    def test_successful_retrieval_two_stem_mode(self, mock_api_provider):
+        """Test successful retrieval of a 2-stem (vocals_instrumental) result"""
+        mock_api_provider.post.return_value = {
+            "stemflowTaskId": "sf_task_123",
+            "stems": {
+                "vocals": "https://example.com/vocals.wav",
+                "instrumental": "https://example.com/no_vocals.wav",
+                "bass": "",
+                "drums": "",
+                "other": "",
+            },
+            "error": False,
+            "message": "Successfully retrieved separated stems."
+        }
+
+        controller = StemFlowController(mock_api_provider)
+        result = controller.retrieve_stems("sf_task_123")
+
+        assert isinstance(result, SeparatedStemsResult)
+        assert result.vocals == "https://example.com/vocals.wav"
+        assert result.instrumental == "https://example.com/no_vocals.wav"
+        assert result.bass in (None, "")
+        assert result.drums in (None, "")
+        assert result.other in (None, "")
 
     def test_not_complete_yet_raises(self, mock_api_provider):
         """Test that a 202 'not complete yet' response raises rather than returning empty stems"""

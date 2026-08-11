@@ -384,6 +384,18 @@ class TestStemFlowModels:
         """Test StemSeparationRequest creation"""
         request = StemSeparationRequest(audio_file_location="https://example.com/song.wav")
         assert request.audio_file_location == "https://example.com/song.wav"
+        assert request.separation_mode is None
+        assert request.webhook_url is None
+
+    def test_stem_separation_request_with_mode_and_webhook(self):
+        """Test StemSeparationRequest with separation_mode and webhook_url"""
+        request = StemSeparationRequest(
+            audio_file_location="https://example.com/song.wav",
+            separation_mode="vocals_instrumental",
+            webhook_url="https://example.com/hook",
+        )
+        assert request.separation_mode == "vocals_instrumental"
+        assert request.webhook_url == "https://example.com/hook"
 
     def test_stem_separation_task_response_defaults(self):
         """Test StemSeparationTaskResponse defaults"""
@@ -408,6 +420,7 @@ class TestStemFlowModels:
         """Test SeparatedStemsResult defaults to all-None"""
         result = SeparatedStemsResult()
         assert result.vocals is None
+        assert result.instrumental is None
         assert result.bass is None
         assert result.drums is None
         assert result.other is None
@@ -424,6 +437,15 @@ class TestStemFlowModels:
         assert result.bass == "https://example.com/bass.wav"
         assert result.drums == "https://example.com/drums.wav"
         assert result.other == "https://example.com/other.wav"
+
+    def test_separated_stems_result_with_instrumental(self):
+        """Test SeparatedStemsResult with the instrumental (2-stem) URL"""
+        result = SeparatedStemsResult(
+            vocals="https://example.com/vocals.wav",
+            instrumental="https://example.com/no_vocals.wav",
+        )
+        assert result.vocals == "https://example.com/vocals.wav"
+        assert result.instrumental == "https://example.com/no_vocals.wav"
 
 
 class TestRecombineModels:
@@ -452,6 +474,16 @@ class TestRecombineModels:
         assert request.backing_stem_url is None
         assert request.desired_loudness == DesiredLoudness.MEDIUM
         assert request.vocal_gain_db == 0.0
+        assert request.webhook_url is None
+
+    def test_recombine_request_with_webhook_url(self):
+        """Test RecombineRequest with an optional webhook_url"""
+        request = RecombineRequest(
+            stem_job_id="sf_task_123",
+            musical_style=RecombineMusicalStyle.POP,
+            webhook_url="https://example.com/hook"
+        )
+        assert request.webhook_url == "https://example.com/hook"
 
     def test_recombine_request_via_direct_urls(self):
         """Test RecombineRequest with direct vocal + backing URLs"""

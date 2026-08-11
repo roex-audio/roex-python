@@ -271,6 +271,22 @@ client.stem_separation.wait_for_separation(separation_task.stemflow_task_id)
 stems = client.stem_separation.retrieve_stems(separation_task.stemflow_task_id)
 print(f"Vocals stem: {stems.vocals}")
 
+# 2-stem mode (optional): request vocals + a single instrumental (no-vocals) stem
+two_stem_task = client.stem_separation.create_separation(
+    StemSeparationRequest(
+        audio_file_location=song_url,
+        separation_mode="vocals_instrumental",
+    )
+)
+client.stem_separation.wait_for_separation(two_stem_task.stemflow_task_id)
+two_stems = client.stem_separation.retrieve_stems(two_stem_task.stemflow_task_id)
+print(f"Instrumental stem: {two_stems.instrumental}")  # vocals + instrumental
+
+# Optional: webhook notifications (pending/started/completed/failed)
+# webhook_task = client.stem_separation.create_separation(
+#     StemSeparationRequest(audio_file_location=song_url, webhook_url="https://your-server.com/hook")
+# )
+
 # Step 3: Recombine the vocal with the (summed) backing track from the same job
 recombine_task = client.recombine.create_recombine(
     RecombineRequest(
@@ -289,6 +305,8 @@ print(f"Final Master URL: {final_result.master_url}")
 ```
 
 **Direct recombine (skip separation):** provide `vocal_stem_url` and `backing_stem_url` on `RecombineRequest` instead of `stem_job_id` if you already have an isolated vocal and a backing/beat track.
+
+**Webhooks:** add `webhook_url="https://your-server.com/hook"` to `RecombineRequest` (or `StemSeparationRequest`) to receive async status notifications (pending/started/completed/failed) instead of polling.
 
 **`RecombineMusicalStyle` options:** `ROCK_INDIE`, `POP`, `ACOUSTIC`, `HIPHOP_GRIME`, `ELECTRONIC`, `REGGAE_DUB`, `ORCHESTRAL`, `METAL`, `OTHER`, `JAZZ`, `LO_FI`, `LATIN`, `TECHNO`, `HOUSE`, `TRAP`, `COUNTRY_ACOUSTIC`, `CINEMATIC`, `AFROBEAT`, `K_POP`, `REGGAETON`.
 

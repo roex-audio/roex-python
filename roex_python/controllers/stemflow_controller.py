@@ -74,7 +74,12 @@ class StemFlowController:
             >>> print(f"Separation task started with ID: {task.stemflow_task_id}")
         """
         logger.info("Submitting stem separation task.")
-        payload = {"stemflowData": {"audioFileLocation": request.audio_file_location}}
+        data = {"audioFileLocation": request.audio_file_location}
+        if request.separation_mode:
+            data["separationMode"] = request.separation_mode
+        if request.webhook_url:
+            data["webhookURL"] = request.webhook_url
+        payload = {"stemflowData": data}
 
         try:
             response = self.api_provider.post("/separate", payload)
@@ -226,6 +231,7 @@ class StemFlowController:
             stems = response.get("stems", {}) or {}
             return SeparatedStemsResult(
                 vocals=stems.get("vocals"),
+                instrumental=stems.get("instrumental"),
                 bass=stems.get("bass"),
                 drums=stems.get("drums"),
                 other=stems.get("other"),

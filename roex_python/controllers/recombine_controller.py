@@ -318,6 +318,8 @@ class RecombineController:
             "desiredLoudness": request.desired_loudness.value,
             "vocalGainDb": request.vocal_gain_db,
         }
+        if request.webhook_url:
+            data["webhookURL"] = request.webhook_url
         if request.stem_job_id is not None:
             data["stemJobId"] = request.stem_job_id
         else:

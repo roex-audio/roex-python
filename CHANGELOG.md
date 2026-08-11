@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2026-08-11
+
+### Added
+- **Two-stem separation mode**: `StemSeparationRequest` now accepts `separation_mode="vocals_instrumental"`, which requests a `vocals` stem plus a single `instrumental` (no-vocals) backing stem. `SeparatedStemsResult` gains an `instrumental` field for the 2-stem case (empty in the default 4-stem mode).
+- **Webhooks for separation & recombine**: `StemSeparationRequest` and `RecombineRequest` accept an optional `webhook_url` to receive async status notifications (pending/started/completed/failed) for the respective jobs.
+
 ## [1.5.0] - 2026-08-06
 
 ### Added
